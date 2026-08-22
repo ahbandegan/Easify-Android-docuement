@@ -1,0 +1,171 @@
+---
+title: easify-notification
+description: Benutzerhandbuch für das Modul easify-notification
+---
+
+# easify-notification
+
+Dieses Modul wurde entwickelt, um den Prozess der Erstellung und Anzeige verschiedener Benachrichtigungen (Notifications) in Android zu vereinfachen. Es hilft Ihnen, ganz einfach Nachrichten an Ihre Benutzer zu senden, ohne sich mit der Komplexität des `NotificationManager` und dem Einrichten von Benachrichtigungskanälen befassen zu müssen.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-notification:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### Eine einfache Benachrichtigung anzeigen (Simple Notification)
+
+Die Klasse `NotificationHelper` hilft Ihnen dabei, problemlos eine Benachrichtigung zu senden. Sie erstellt automatisch die erforderlichen Kanäle für Android 8 (API 26) und höher.
+
+**Anwendungsbeispiel in Jetpack Compose:**
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_notification.NotificationHelper
+
+@Composable
+fun SimpleNotificationScreen() {
+    val context = LocalContext.current
+
+    Button(onClick = {
+        NotificationHelper.showNotification(
+            context = context,
+            channelId = "default_channel",
+            channelName = "Allgemeiner Kanal",
+            title = "Neue Nachricht!",
+            message = "Sie haben eine ungelesene Nachricht.",
+            smallIcon = android.R.drawable.ic_dialog_info,
+            notificationId = 1001
+        )
+    }) {
+        Text("Benachrichtigung anzeigen")
+    }
+}
+```
+
+## API-Referenz
+
+### ActionButtonsNotification
+
+```kotlin
+data class NotificationAction(val iconRes: Int, val title: String, val pendingIntent: PendingIntent)
+```
+Eine Datenklasse zur Konfiguration von Benachrichtigungs-Aktionsschaltflächen (Action Buttons), die ein Symbol, einen Titel und einen `PendingIntent` enthält.
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, title: String, message: String, iconRes: Int, actions: List<NotificationAction>)
+```
+Zeigt eine Benachrichtigung mit den angegebenen interaktiven Schaltflächen an.
+
+### BigStyleNotification
+
+```kotlin
+fun showBigText(context: Context, channelId: String, notificationId: Int, title: String, shortMessage: String, longMessage: String, iconRes: Int)
+```
+Zeigt eine erweiterbare Benachrichtigung an, die langen Text (BigText) enthüllt.
+
+```kotlin
+fun showBigPicture(context: Context, channelId: String, notificationId: Int, title: String, message: String, bitmap: Bitmap, iconRes: Int)
+```
+Zeigt eine Benachrichtigung an, die ein großes Bild (BigPicture) enthält.
+
+### ChannelManager
+
+```kotlin
+fun createGroup(context: Context, groupId: String, groupName: String)
+```
+Erstellt eine Benachrichtigungskanalgruppe (Channel Group) für eine bessere Kategorisierung von Kanälen in den Android-Systemeinstellungen.
+
+```kotlin
+fun createChannel(context: Context, channelId: String, channelName: String, importance: Int = NotificationManager.IMPORTANCE_DEFAULT, description: String? = null, groupId: String? = null, soundUri: Uri? = null, enableLights: Boolean = true, lightColor: Int = Color.BLUE, enableVibration: Boolean = true, vibrationPattern: LongArray = longArrayOf(0, 250, 250, 250))
+```
+Erstellt einen Benachrichtigungskanal mit benutzerdefinierten Einstellungen und Funktionen wie Wichtigkeit, Ton, Benachrichtigungslicht und Vibrationsmuster.
+
+### DirectReplyNotification
+
+```kotlin
+const val KEY_TEXT_REPLY = "key_text_reply"
+```
+Der Schlüssel, der im `Intent` verwendet wird, um den vom Benutzer in einer direkten Antwort eingegebenen Text zu empfangen.
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, title: String, message: String, iconRes: Int, replyActionTitle: String = "Reply", intentClass: Class<*>)
+```
+Zeigt eine Benachrichtigung an, die es dem Benutzer ermöglicht, direkt innerhalb der Benachrichtigung selbst eine Textantwort einzugeben und zu senden.
+
+### GroupedNotification
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, groupId: String, title: String, message: String, iconRes: Int, isGroupSummary: Boolean = false, summaryText: String = "")
+```
+Zeigt kategorisierte (gruppierte) Benachrichtigungen oder eine Benachrichtigung als Gruppenzusammenfassung an.
+
+### InAppBanner
+
+```kotlin
+@Composable fun InAppBanner(isVisible: Boolean, title: String, message: String, onDismiss: () -> Unit)
+```
+Ein Jetpack Compose-Komponent zur Anzeige eines In-App-Banners, das von oben erscheint und sich nach wenigen Sekunden wieder verbirgt.
+
+### NotificationHelper
+
+```kotlin
+fun showNotification(context: Context, channelId: String, channelName: String, title: String, message: String, smallIcon: Int, notificationId: Int = 1001)
+```
+Ein einfaches Tool zum Anzeigen von Textbenachrichtigungen und zur automatischen Erstellung ihres Kanals bei Bedarf.
+
+### NotificationPermission
+
+```kotlin
+@Composable fun rememberNotificationPermission(): NotificationPermissionState
+```
+Ruft den Status der Berechtigung zur Anzeige von Benachrichtigungen in Android 13 und höher mithilfe von Jetpack Compose ab, steuert und verwaltet ihn.
+
+```kotlin
+class NotificationPermissionState(val isGranted: Boolean, val requestPermission: () -> Unit, val openSettings: () -> Unit)
+```
+Eine Klasse zum Speichern des aktuellen Berechtigungsstatus, eine Funktion zum Anfordern von Berechtigungen und eine Funktion, um den Benutzer auf die Benachrichtigungseinstellungsseite der App weiterzuleiten.
+
+### ProgressNotification
+
+```kotlin
+class ProgressNotification(context: Context, channelId: String, notificationId: Int, title: String, iconRes: Int)
+```
+Erstellt eine Benachrichtigung, die einen Fortschrittsbalken (Progress bar) enthält.
+
+```kotlin
+fun updateProgress(progress: Int, max: Int = 100, message: String = "$progress%")
+```
+Aktualisiert den Prozentsatz des Fortschrittsbalkens zusammen mit benutzerdefiniertem Text.
+
+```kotlin
+fun setIndeterminate(message: String = "Processing...")
+```
+Ändert den Fortschrittsbalken in einen unbestimmten Modus (Indeterminate), wenn die Abschlusszeit des Vorgangs unbekannt ist.
+
+```kotlin
+fun finish(successMessage: String = "Complete")
+```
+Entfernt den Fortschrittsbalken und zeigt eine Abschluss- und Erfolgsmeldung des Vorgangs an.
+
+```kotlin
+fun cancel()
+```
+Bricht die laufende Benachrichtigung ab und entfernt sie.
+
+### ScheduledNotification
+
+```kotlin
+inline fun <reified W : CoroutineWorker> schedule(context: Context, delayMillis: Long, inputData: Data = workDataOf()): UUID
+```
+Plant einen Hintergrundprozess (Worker), um eine Benachrichtigung mit einer bestimmten Verzögerung anzuzeigen.
+
+```kotlin
+fun cancel(context: Context, workId: UUID)
+```
+Bricht eine geplante Benachrichtigung mithilfe ihrer Prozess-ID ab.

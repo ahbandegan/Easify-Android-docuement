@@ -1,0 +1,170 @@
+---
+title: easify-form
+description: Usage guide for the easify-form module
+---
+
+# easify-form
+
+This module is designed for creating and managing forms in Jetpack Compose. Using a beautiful DSL, you can easily manage fields, validation rules, and the form state.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-form:2.1.0")
+```
+
+## Usage Guide
+
+### Form State Management (rememberForm)
+You can define and manage all form fields and their validation rules in one place.
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import ir.amirhesambandegan.easify_form.rememberForm
+import kotlinx.coroutines.launch
+
+@Composable
+fun FormExample() {
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Define the form state
+    val formState = rememberForm {
+        field(
+            key = "username",
+            initialValue = ""
+        )
+        field(
+            key = "password",
+            initialValue = ""
+        )
+    }
+
+    val usernameField = formState.getField("username")
+    val passwordField = formState.getField("password")
+
+    Column {
+        OutlinedTextField(
+            value = usernameField?.value ?: "",
+            onValueChange = { usernameField?.value = it },
+            label = { Text("Username") }
+        )
+        
+        OutlinedTextField(
+            value = passwordField?.value ?: "",
+            onValueChange = { passwordField?.value = it },
+            label = { Text("Password") }
+        )
+
+        Button(onClick = {
+            coroutineScope.launch {
+                if (formState.validateAll()) {
+                    // Form is valid
+                }
+            }
+        }) {
+            Text("Register")
+        }
+    }
+}
+```
+
+
+## API Reference
+
+```kotlin
+class FormArrayState(private val templateBuilder: FormBuilder.() -> Unit)
+```
+A class for managing an array of repetitive and dynamic form groups (e.g., list of work experiences).
+- **Parameters:** `templateBuilder` builder function for each form item.
+- **Important properties and functions:**
+  - `val items`: Observable list of `FormState` items.
+  - `fun addItem()`: Adds a new form to the end of the array.
+  - `fun removeItem(index: Int)`: Removes the form at the specified index.
+  - `fun validateAll(): Boolean`: Validates all forms within the array.
+  - `fun toListMap(): List<Map<String, String>>`: Converts the array into a list of maps (key-value).
+
+```kotlin
+class FormField(
+    val key: String,
+    val initialValue: String = "",
+    val rules: List<ValidationRule> = emptyList(),
+    val asyncValidator: (suspend (String) -> String?)? = null,
+    val inputFilter: ((String) -> String)? = null
+)
+```
+A class representing a field in the form, including its state and validation logic.
+- **Parameters:** `key`, `initialValue`, `rules` (sync rules), `asyncValidator`, `inputFilter`.
+- **Properties:** `value` (current value), `error` (validation error), `isTouched`, `isDirty`, `isValidating`, `focusRequester`.
+- **Functions:**
+  - `fun validate(): Boolean`: Synchronous validation.
+  - `suspend fun validateAsync(): Boolean`: Sync and async validation.
+
+```kotlin
+class ValidationRule(val errorMessage: String, val check: (String) -> Boolean)
+```
+A class defining a validation rule.
+- **Parameters:** `errorMessage` error message, `check` function checking value validity.
+
+```kotlin
+object Validators
+```
+A set of pre-defined validation rules.
+- **Functions:**
+  - `fun required(msg: String = ...): ValidationRule`: Field must not be empty.
+  - `fun email(msg: String = ...): ValidationRule`: Valid email format.
+  - `fun minLength(len: Int, msg: String = ...): ValidationRule`: Minimum character length.
+  - `fun phoneIr(msg: String = ...): ValidationRule`: Valid Iranian mobile number.
+  - `fun match(otherFieldKey: String, formState: FormState, msg: String = ...): ValidationRule`: Match with another field (e.g., password confirmation).
+  - `fun passwordStrength(msg: String = ...): ValidationRule`: Password strength (uppercase, lowercase, and numbers).
+
+```kotlin
+class FormState(val fields: List<FormField>)
+```
+A class to manage the state, data, and validation of a collection of `FormField`s.
+- **Parameters:** `fields` list of form fields.
+- **Properties:** `isValid` (overall form validity), `isDirty` (any field changed).
+- **Functions:**
+  - `fun getField(key: String): FormField?`: Gets a field by key.
+  - `fun validateAll(): Boolean`: Validates all fields and focuses on the first error.
+  - `suspend fun validateAllAsync(): Boolean`: Sync and async validation for all fields.
+  - `fun toMap(): Map<String, String>`: Extracts all form data into a map.
+  - `fun populate(data: Map<String, String>)`: Fills the form with data from a map.
+  - `fun saveDraft(context: Context, formId: String)`: Saves form draft in SharedPreferences.
+  - `fun restoreDraft(context: Context, formId: String)`: Restores the saved draft.
+
+```kotlin
+object InputFilters
+```
+A collection of input filters to apply on fields while typing.
+- **Functions:**
+  - `fun onlyNumbers(): (String) -> String`: Only digits.
+  - `fun onlyEnglishLetters(): (String) -> String`: Only English letters and spaces.
+  - `fun onlyPersianLetters(): (String) -> String`: Only Persian letters, spaces, and half-spaces.
+  - `fun noSpaces(): (String) -> String`: Removes all spaces.
+
+```kotlin
+class MaskVisualTransformation(private val mask: String, private val maskChar: Char = '#') : VisualTransformation
+```
+Visual transformation for masking input based on a pattern (e.g., phone number).
+- **Parameters:** `mask` mask pattern, `maskChar` replacement character in the pattern.
+
+```kotlin
+class FormBuilder
+```
+Builder class for creating a `FormState` declaratively.
+- **Functions:**
+  - `fun field(...)`: Registers a new field in the form.
+  - `fun build(): FormState`: Builds and returns the `FormState`.
+
+```kotlin
+@Composable
+fun rememberForm(builder: FormBuilder.() -> Unit): FormState
+```
+A Composable function for creating and remembering the form state using a DSL.
+- **Parameters:** `builder` the form builder body.
+- **Returns:** A `FormState` instance preserved during recomposition.

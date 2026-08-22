@@ -1,0 +1,159 @@
+---
+title: easify-permission
+description: Benutzerhandbuch für das Modul easify-permission
+---
+
+# easify-permission
+
+Dieses Modul wurde entwickelt, um Berechtigungen (Permissions) in Android-Anwendungen auf Basis von Jetpack Compose zu verwalten. Mit diesem Modul können Sie den Status von Berechtigungen überprüfen und Berechtigungen vom Benutzer anfordern, ohne langwierigen Code schreiben zu müssen.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-permission:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### Einzelne Berechtigung anfordern (Request Single Permission)
+Mit dem Composable `RequestPermission` können Sie eine bestimmte Berechtigung vom Benutzer anfordern, sobald ein Bildschirm (Screen) ausgeführt wird.
+
+**Anwendungsbeispiel in Jetpack Compose:**
+
+```kotlin
+import android.Manifest
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import ir.amirhesambandegan.easify_permission.RequestPermission
+
+@Composable
+fun CameraPermissionScreen() {
+    var statusText by remember { mutableStateOf("Berechtigung wird geprüft...") }
+
+    RequestPermission(
+        permission = Manifest.permission.CAMERA,
+        onGrant = {
+            statusText = "Kameraberechtigung gewährt ✅"
+        },
+        onDenied = {
+            statusText = "Kameraberechtigung verweigert ❌"
+        }
+    )
+
+    Text(text = statusText)
+}
+```
+
+## API-Referenz
+
+```kotlin
+fun Context.openAppSettings()
+```
+Diese Erweiterungsfunktion auf `Context` öffnet die anwendungsspezifische Einstellungsseite in den Android-Systemeinstellungen. Diese Funktion kann verwendet werden, wenn eine Berechtigung dauerhaft verweigert wurde (Permanently Denied) und der Benutzer die Berechtigung für die App manuell in den Einstellungen erteilen muss.
+
+```kotlin
+object BatteryOptimizationHelper {
+    fun isIgnoringBatteryOptimizations(context: Context): Boolean
+    fun requestIgnoreBatteryOptimizations(context: Context)
+}
+```
+Eine Hilfsklasse zum Überprüfen und Anfordern der Ausnahme der Anwendung von Akku-Optimierungen (Doze-Modus).
+- **`isIgnoringBatteryOptimizations`**: Überprüft, ob die App von der Akku-Optimierung ausgenommen ist. Nimmt `context` als Eingabe und gibt einen `Boolean` zurück.
+- **`requestIgnoreBatteryOptimizations`**: Leitet den Benutzer zur Einstellungsseite weiter, um die Akku-Optimierung für die App zu deaktivieren, damit diese ohne Einschränkungen im Hintergrund ausgeführt werden kann.
+
+```kotlin
+fun isGranted(permission: String, context: Context): PermissionStats?
+```
+Eine Hilfsfunktion, um zu überprüfen, ob eine bestimmte Laufzeitberechtigung (Runtime Permission) bereits gewährt wurde.
+- **Eingaben**: Der `permission`-String (z. B. `Manifest.permission.CAMERA`) und `context`.
+- **Rückgabe**: Den Berechtigungsstatus als `PermissionStats`-Wert (z. B. `PERMISSION_GRANTED` oder `PERMISSION_DENIED`).
+
+```kotlin
+class MultiplePermissionsState(
+    val permissions: List<String>,
+    val allPermissionsGranted: Boolean,
+    val shouldShowRationale: Boolean,
+    val launchMultiplePermissionRequest: () -> Unit
+)
+```
+Eine Klasse zur Speicherung des Status mehrerer Berechtigungsanforderungen in Jetpack Compose.
+- **`permissions`**: Die Liste der angeforderten Berechtigungen.
+- **`allPermissionsGranted`**: `true`, wenn alle Berechtigungen gewährt wurden.
+- **`shouldShowRationale`**: Zeigt an, dass dem Benutzer vor einer erneuten Anforderung eine Erklärung angezeigt werden sollte.
+- **`launchMultiplePermissionRequest`**: Eine Funktion zum Aufrufen des Berechtigungsanforderungs-Dialogs für die aufgelisteten Berechtigungen.
+
+```kotlin
+@Composable
+fun rememberMultiplePermissionsState(permissions: List<String>): MultiplePermissionsState
+```
+Dieses Composable überprüft den Status mehrerer verschiedener Berechtigungen (eine Liste von Strings) und gibt sie als `MultiplePermissionsState`-Objekt zurück, das ihren aktuellen Status und die Dialog-Aufruffunktion enthält.
+
+```kotlin
+enum class PermissionStatus {
+    GRANTED,
+    DENIED_SHOULD_SHOW_RATIONALE,
+    PERMANENTLY_DENIED
+}
+```
+Ein Enum zur detaillierten Anzeige des Berechtigungsstatus, einschließlich `GRANTED` (gewährt), `DENIED_SHOULD_SHOW_RATIONALE` (verweigert, Erklärung erforderlich) oder `PERMANENTLY_DENIED` (dauerhaft verweigert).
+
+```kotlin
+class PermissionState(
+    val permission: String,
+    val status: PermissionStatus,
+    val launchPermissionRequest: () -> Unit
+)
+```
+Eine Klasse zur Speicherung des Status einer bestimmten Berechtigungsanforderung in Jetpack Compose.
+- Enthält den Namen der `permission` (Berechtigung), ihren aktuellen `status` und die Funktion `launchPermissionRequest` zum Aufrufen der Berechtigungsanforderung.
+
+```kotlin
+@Composable
+fun rememberPermissionState(permission: String): PermissionState
+```
+Ein Composable zum Abrufen und Überwachen des Status einer Berechtigung während des Compose-UI-Lebenszyklus. Gibt ein `PermissionState` zurück.
+
+```kotlin
+enum class PermissionStats {
+    PERMISSION_GRANTED,
+    PERMISSION_DENIED
+}
+```
+Ein einfaches Enum zur Festlegung des Gesamtstatus einer Berechtigung. Das zugehörige Companion-Objekt verfügt über eine `fromNumber`-Funktion, um Android-Rückgabecodes (`PackageManager`) in Werte dieser Klasse umzuwandeln.
+
+```kotlin
+@Composable
+fun RequestMultiplePermissions(
+    permissions: List<String>,
+    onGrant: () -> Unit,
+    onDenied: () -> Unit
+)
+```
+Ein Headless Effect Composable (ohne UI), das die in der Variablen `permissions` bereitgestellte Liste von Berechtigungen anfordert, sobald es auf dem Bildschirm geladen wird.
+- **`onGrant`**: Wird ausgeführt, wenn alle Berechtigungen erfolgreich empfangen wurden.
+- **`onDenied`**: Wird aufgerufen, wenn mindestens eine Berechtigung verweigert wird.
+
+```kotlin
+@Composable
+fun RequestPermission(
+    permission: String,
+    onGrant: () -> Unit,
+    onDenied: () -> Unit
+)
+```
+Ein Headless Effect Composable zum Anfordern einer bestimmten `permission`.
+- `onGrant` wird sofort aufgerufen, wenn die Berechtigung bereits vorliegt, oder nach der Zustimmung des Benutzers. Bei Ablehnung wird `onDenied` ausgeführt.
+
+```kotlin
+object SpecialPermissionsHelper {
+    fun canDrawOverlays(context: Context): Boolean
+    fun requestOverlayPermission(context: Context)
+}
+```
+Eine Hilfsklasse zum Überprüfen und Anfordern spezieller Betriebssystem-Berechtigungen, insbesondere das Einblenden über anderen Apps (System Alert Window).
+- **`canDrawOverlays`**: Überprüft die Overlay-Berechtigung und gibt einen `Boolean` zurück.
+- **`requestOverlayPermission`**: Fordert die Berechtigung zum Überlagern von Apps an, indem der Benutzer zum entsprechenden Einstellungsbereich weitergeleitet wird.

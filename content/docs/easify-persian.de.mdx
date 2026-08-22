@@ -1,0 +1,168 @@
+---
+title: easify-persian
+description: Benutzerhandbuch für das Modul easify-persian
+---
+
+# easify-persian
+
+Dieses Modul ist eine Sammlung praktischer Werkzeuge für die Arbeit mit dem Jalali-Kalender (persisch), Daten und persischen Zahlen in Jetpack Compose. Mit diesem Modul können Sie persische Datumsauswahldialoge erstellen und Zahlen sowie Texte problemlos in persische Standardformate konvertieren.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-persian:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### Verwendung des persischen Datumsauswahldialogs (Persian Date Picker Dialog)
+Das Composable `PersianDatePickerDialog` zeigt dem Benutzer einen schönen und nativen Dialog zur Auswahl eines Shamsi-Datums (Jalali) an.
+
+**Anwendungsbeispiel in Jetpack Compose:**
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import ir.amirhesambandegan.easify_persian.PersianDatePickerDialog
+
+@Composable
+fun DatePickerExampleScreen() {
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedDateText by remember { mutableStateOf("Kein Datum ausgewählt") }
+
+    Column {
+        Button(onClick = { showDialog = true }) {
+            Text("Geburtsdatum auswählen")
+        }
+
+        Text(text = selectedDateText)
+    }
+
+    if (showDialog) {
+        PersianDatePickerDialog(
+            onDismissRequest = { showDialog = false },
+            onDateSelected = { jalaliDate ->
+                selectedDateText = "Ausgewähltes Datum: ${jalaliDate.year}/${jalaliDate.month}/${jalaliDate.day}"
+                showDialog = false
+            }
+        )
+    }
+}
+```
+
+## API-Referenz
+
+```kotlin
+data class JalaliDate(val year: Int, val month: Int, val day: Int)
+```
+Eine Datenklasse zur Speicherung eines Shamsi-Datums (Jalali).
+- **Parameter:** `year` (Shamsi-Jahr), `month` (Shamsi-Monat von 1 bis 12), `day` (Tag des Monats von 1 bis 31).
+
+```kotlin
+fun Date.toJalali(): JalaliDate
+```
+Konvertiert ein gregorianisches `Date`-Objekt in ein `JalaliDate` (Shamsi-Datum).
+- **Rückgabe:** Eine Instanz von `JalaliDate`, die dem gregorianischen Datum entspricht.
+
+```kotlin
+fun JalaliDate.toGregorian(): Date
+```
+Konvertiert ein Shamsi-Datum (`JalaliDate`) in ein gregorianisches Datum (`Date`).
+- **Rückgabe:** Eine Instanz von `Date`, die dem Shamsi-Datum entspricht.
+
+```kotlin
+fun JalaliDate.getMonthName(): String
+```
+Gibt den Namen des Shamsi-Monats zurück, der dem Datum entspricht (z. B. "Farvardin", "Ordibehesht").
+- **Rückgabe:** Der Name des Monats als String. Gibt "Unbekannt" zurück, wenn der Wert ungültig ist.
+
+```kotlin
+fun JalaliDate.isLeapYear(): Boolean
+```
+Überprüft, ob das angegebene Shamsi-Jahr ein Schaltjahr ist.
+- **Rückgabe:** `true`, wenn es ein Schaltjahr ist, andernfalls `false`.
+
+```kotlin
+@Composable
+fun PersianDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    onDateSelected: (JalaliDate) -> Unit,
+    initialDate: JalaliDate = Date().toJalali()
+)
+```
+Zeigt einen Jetpack Compose-Dialog zur Auswahl eines Shamsi-Datums an.
+- **Parameter:** 
+  - `onDismissRequest`: Funktion, die beim Abbrechen und Schließen des Dialogs aufgerufen wird.
+  - `onDateSelected`: Funktion, die bei der Bestätigung eines Datums aufgerufen wird und das ausgewählte `JalaliDate` als Eingabe nimmt.
+  - `initialDate`: Das Standarddatum, das im Dialog angezeigt wird (standardmäßig der aktuelle Tag).
+
+```kotlin
+fun String.toStandardPersian(): String
+```
+Standardisiert persischen Text durch Korrektur arabischer Zeichen (wie 'ي' zu 'ی' und 'ك' zu 'ک'), Entfernung von Vokalen (E'rab) und Konvertierung englischer Zahlen in persische Zahlen.
+- **Rückgabe:** Standardisierter persischer Text als String.
+
+```kotlin
+fun Long.toPersianTimeAgo(): String
+```
+Konvertiert eine Zeit (in Millisekunden) in einen lesbaren persischen Ausdruck für die verstrichene Zeit (z. B. "vor 5 Minuten", "gestern").
+- **Rückgabe:** Der persische Ausdruck, der der vergangenen Zeit entspricht.
+
+```kotlin
+@Composable
+fun PersianTimePickerDialog(
+    onDismissRequest: () -> Unit,
+    onTimeSelected: (hour: Int, minute: Int) -> Unit,
+    initialHour: Int = 12,
+    initialMinute: Int = 0
+)
+```
+Zeigt einen Jetpack Compose-Dialog zur Auswahl der Zeit an.
+- **Parameter:**
+  - `onDismissRequest`: Funktion, die beim Abbrechen der Auswahl aufgerufen wird.
+  - `onTimeSelected`: Funktion, die nach Bestätigung der Zeit mit der ausgewählten Stunde (`hour`) und Minute (`minute`) aufgerufen wird.
+  - `initialHour`: Standardstunde (Standard ist 12).
+  - `initialMinute`: Standardminute (Standard ist 0).
+
+```kotlin
+fun String.isValidNationalCode(): Boolean
+```
+Wertet einen iranischen Nationalcode (Melli-Code) aus, indem seine Länge (10 Ziffern) und der Prüfsummen-Algorithmus überprüft werden.
+- **Rückgabe:** `true`, wenn der Nationalcode gültig ist, andernfalls `false`.
+
+```kotlin
+fun String.isValidPersianMobile(): Boolean
+```
+Wertet aus, ob eine iranische Mobiltelefonnummer gültig ist (unterstützt verschiedene Vorwahlen wie 09, +989, 989).
+- **Rückgabe:** `true`, wenn die Mobiltelefonnummer gültig ist, andernfalls `false`.
+
+```kotlin
+fun String.isValidBankCard(): Boolean
+```
+Bewertet eine 16-stellige iranische Bankkartennummer mit dem Luhn-Algorithmus.
+- **Rückgabe:** `true`, wenn die Kartennummer gültig ist, andernfalls `false`.
+
+```kotlin
+fun Number.toPersianCurrencyText(unit: String = "Toman"): String
+```
+Konvertiert eine Zahl in den entsprechenden persischen Währungstext (z. B. 15000 in "پانزده هزار تومان").
+- **Parameter:** `unit` die Währungseinheit (Standard ist "Toman").
+- **Rückgabe:** Formatierter String für den Geldbetrag.
+
+```kotlin
+fun String.toPersianDigits(): String
+```
+Konvertiert alle englischen Ziffern in einem String in die entsprechenden persischen Ziffern.
+- **Rückgabe:** Ein neuer String mit persischen Zahlen.
+
+```kotlin
+fun Long.toPersianWords(): String
+```
+Konvertiert eine Zahl (vom Typ Long) in persische Wörter (z. B. 1250 in "یک هزار و دویست و پنجاه").
+- **Rückgabe:** Die numerische Darstellung in persischen Wörtern.

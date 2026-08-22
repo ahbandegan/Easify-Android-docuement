@@ -1,0 +1,208 @@
+---
+title: easify-network
+description: Usage guide for the easify-network module
+---
+
+# easify-network
+
+The `easify-network` module provides powerful communication and networking tools based on Ktor, along with network monitoring capabilities. It covers network client configuration, file download/upload, retry mechanisms, and internet status monitoring.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-network:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Ready-made Ktor Client (createKtorClient) and Safe Requests (SafeRequest)
+
+This module allows you to easily create a Ktor client with all necessary plugins (logger, cache, authentication) and send safe requests.
+
+```kotlin
+import io.ktor.client.request.get
+import ir.amirhesambandegan.easify_network.createKtorClient
+import ir.amirhesambandegan.easify_network.SafeRequest
+import ir.amirhesambandegan.easify_network.EasifyResult
+
+// Create the client once for the whole app (e.g., with DI or Singleton)
+val apiClient = createKtorClient() 
+
+suspend fun fetchUserData(userId: String): EasifyResult<UserResponse> {
+    // Use SafeRequest to automatically handle Exceptions and convert them to EasifyResult
+    return SafeRequest.execute {
+        apiClient.get("https://api.example.com/users/$userId")
+    }
+}
+```
+*By using the `EasifyResult` class, you get a standard wrapper over server responses (including Success, Error, Loading states).*
+
+### 2. Internet Connectivity Monitoring (ConnectivityObserver)
+
+It is very common to show a message (Snack bar) to the user if the app's internet disconnects. `ConnectivityObserver` makes this easy.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_network.ConnectivityObserver
+import ir.amirhesambandegan.easify_network.ConnectivityObserver.Status
+
+@Composable
+fun NetworkAwareScreen() {
+    val context = LocalContext.current
+    val connectivityObserver = remember { ConnectivityObserver(context) }
+    
+    // Get the current internet status state
+    val networkStatus by connectivityObserver.observe().collectAsState(initial = Status.Available)
+
+    when (networkStatus) {
+        Status.Available -> Text("You are connected to the internet")
+        Status.Unavailable, Status.Lost -> Text("Internet is disconnected!", color = Color.Red)
+        Status.Losing -> Text("Your internet connection is unstable...")
+    }
+}
+```
+
+### 3. Powerful File Downloading (FileDownloader)
+
+If you need to download files and show progress to the user.
+
+```kotlin
+import ir.amirhesambandegan.easify_network.FileDownloader
+import kotlinx.coroutines.flow.collect
+
+suspend fun downloadSamplePdf(context: Context) {
+    val downloader = FileDownloader(context)
+    val url = "https://example.com/sample.pdf"
+    val destFile = File(context.cacheDir, "sample.pdf")
+
+    downloader.downloadFile(url, destFile).collect { progress ->
+        println("Download progress: $progress percent")
+    }
+}
+```
+
+## API Reference
+
+```kotlin
+enum class NetworkBandwidth { OFFLINE, POOR, MODERATE, GOOD, EXCELLENT }
+```
+This Enum categorizes network bandwidth quality, indicating offline, poor, moderate, good, or excellent states.
+
+```kotlin
+@Composable
+fun rememberBandwidthState(): State<NetworkBandwidth>
+```
+A Composable function that continuously monitors bandwidth quality and returns its current state as a `State`.
+
+```kotlin
+class ConnectivityObserver(context: Context) {
+    val online: Flow<Boolean>
+}
+```
+A class for monitoring network online status using `ConnectivityManager`. The `online` variable is a `Flow` that reports real-time internet connection changes (connected/disconnected).
+
+```kotlin
+@Composable
+fun ConnectivityWrapper(
+    noConnectionContent: @Composable () -> Unit = { DefaultNoInternetUI() },
+    content: @Composable () -> Unit
+)
+```
+A wrapper Composable widget that shows an offline error screen and blocks access to the main content if the internet is disconnected. The error UI can be customized using the `noConnectionContent` parameter.
+
+```kotlin
+fun createKtorClient(
+    baseUrl: String? = null,
+    authToken: String? = null,
+    requestTimeoutMillis: Long = 15000L,
+    connectTimeoutMillis: Long = 15000L,
+    socketTimeoutMillis: Long = 15000L
+): HttpClient
+```
+A function to create an `HttpClient` instance along with useful plugins (timeout, logging, and JSON serialization). You can directly set the timeout and initial token.
+
+```kotlin
+class CurlLoggerPlugin
+```
+A plugin for the Ktor client that, when installed, prints all outgoing network requests as equivalent cURL commands in Logcat, making debugging much easier.
+
+```kotlin
+sealed interface EasifyResult<out T> {
+    data class Success<out T>(val data: T) : EasifyResult<T>
+    data class ApiError(val code: Int, val message: String) : EasifyResult<Nothing>
+    data class NetworkError(val exception: Throwable) : EasifyResult<Nothing>
+    data object Loading : EasifyResult<Nothing>
+}
+```
+A sealed interface modeling the result state of a network operation, including success, server error (API), connection error, and loading states.
+
+```kotlin
+fun HttpClient.downloadFile(url: String, destFile: File): Flow<Int>
+```
+An extension to download a file from a `url` and save it to a local path (`destFile`). This function emits a `Flow` containing download progress from 0 to 100 percent. Download error is indicated by `-1`.
+
+```kotlin
+suspend inline fun <reified T> HttpClient.uploadFile(
+    url: String,
+    fileUri: Uri,
+    context: Context,
+    fileKey: String = "file",
+    extraFields: Map<String, String> = emptyMap(),
+    crossinline onProgress: (bytesSent: Long, totalBytes: Long) -> Unit = { _, _ -> }
+): EasifyResult<T>
+```
+A file upload extension with upload progress tracking. With a local `Uri`, it sends the file and any desired text fields using the `multipart/form-data` standard, returning the response as an `EasifyResult<T>`.
+
+```kotlin
+fun HttpClientConfig<*>.installOfflineFirstCache(context: Context)
+```
+A function to add the cache plugin (`HttpCache`) to the Ktor configuration. It allows network responses to be stored in memory for offline use.
+
+```kotlin
+fun HttpClientConfig<*>.installAutoTokenRefresher(
+    loadTokens: suspend () -> BearerTokens?,
+    refreshTokens: suspend () -> BearerTokens?
+)
+```
+Installs and automatically configures authentication with Bearer Tokens. If a 401 error is received, this system intelligently performs a token refresh operation (`refreshTokens`).
+
+```kotlin
+data class NetworkSecurityStatus(
+    val isVpnActive: Boolean,
+    val isCaptivePortal: Boolean
+)
+```
+A data class holding network security information, reporting whether a VPN is active or if the network is behind a Captive Portal.
+
+```kotlin
+@Composable
+fun rememberNetworkSecurityStatus(): State<NetworkSecurityStatus>
+```
+A Composable to continuously get the network security status, returning real-time changes in VPN or Captive Portal usage.
+
+```kotlin
+fun observePing(host: String = "8.8.8.8", port: Int = 53, intervalMs: Long = 3000): Flow<Int>
+```
+A network latency (Ping) monitor. By periodically connecting (every 3 seconds) to a specified server, it returns the response time in milliseconds. A `-1` indicates network disconnection or an unreachable server.
+
+```kotlin
+suspend fun <T> retryNetworkCall(
+    maxAttempts: Int = 3,
+    initialDelayMillis: Long = 1000L,
+    maxDelayMillis: Long = 10000L,
+    factor: Double = 2.0,
+    block: suspend () -> EasifyResult<T>
+): EasifyResult<T>
+```
+A network retry system based on Exponential Backoff. If executing the `block` encounters a network disconnection error, the request is automatically retried up to a certain number of times; however, for server errors (like 4xx), the request will not be retried.
+
+```kotlin
+suspend inline fun <reified T> HttpClient.safeRequest(
+    crossinline block: suspend HttpClient.() -> HttpResponse
+): EasifyResult<T>
+```
+A safe way to execute Ktor requests that appropriately handles all network exceptions and server-side errors, returning the result in a cohesive `EasifyResult<T>` object.

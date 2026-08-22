@@ -3,9 +3,11 @@ import type { Metadata } from 'next';
 import { DocsPage, DocsBody, DocsDescription, DocsTitle } from 'fumadocs-ui/page';
 import { notFound } from 'next/navigation';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
+import { i18n } from '@/lib/i18n';
 
-export default async function Page() {
-  const page = source.getPage([]);
+export default async function Page(props: { params: Promise<{ lang: string }> }) {
+  const params = await props.params;
+  const page = source.getPage([], params.lang);
   if (!page) notFound();
 
   const MDX = page.data.body;
@@ -21,12 +23,17 @@ export default async function Page() {
   );
 }
 
-export async function generateMetadata() {
-  const page = source.getPage([]);
+export async function generateMetadata(props: { params: Promise<{ lang: string }> }) {
+  const params = await props.params;
+  const page = source.getPage([], params.lang);
   if (!page) notFound();
 
   return {
     title: page.data.title,
     description: page.data.description,
   } satisfies Metadata;
+}
+
+export function generateStaticParams() {
+  return i18n.languages.map((lang) => ({ lang }));
 }

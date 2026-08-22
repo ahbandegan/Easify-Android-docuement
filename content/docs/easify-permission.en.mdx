@@ -1,0 +1,159 @@
+---
+title: easify-permission
+description: Usage guide for the easify-permission module
+---
+
+# easify-permission
+
+This module is developed to manage Permissions in Android applications based on Jetpack Compose. With this module, you can check permission statuses and request permissions from the user without needing lengthy code.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-permission:2.1.0")
+```
+
+## Usage Guide
+
+### Request Single Permission
+Using the `RequestPermission` composable, you can request a specific permission from the user as soon as a screen is executed.
+
+**Example usage in Jetpack Compose:**
+
+```kotlin
+import android.Manifest
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import ir.amirhesambandegan.easify_permission.RequestPermission
+
+@Composable
+fun CameraPermissionScreen() {
+    var statusText by remember { mutableStateOf("Checking permission...") }
+
+    RequestPermission(
+        permission = Manifest.permission.CAMERA,
+        onGrant = {
+            statusText = "Camera permission granted ✅"
+        },
+        onDenied = {
+            statusText = "Camera permission denied ❌"
+        }
+    )
+
+    Text(text = statusText)
+}
+```
+
+## API Reference
+
+```kotlin
+fun Context.openAppSettings()
+```
+This extension function on `Context` opens the application's specific settings page in the Android system settings. This function can be used when a permission is Permanently Denied and the user must manually grant permission to the app from within the settings.
+
+```kotlin
+object BatteryOptimizationHelper {
+    fun isIgnoringBatteryOptimizations(context: Context): Boolean
+    fun requestIgnoreBatteryOptimizations(context: Context)
+}
+```
+A helper class to check and request the application's exemption from battery optimizations (Doze Mode).
+- **`isIgnoringBatteryOptimizations`**: Checks whether the app is exempt from battery optimization. Takes `context` as input and returns a `Boolean`.
+- **`requestIgnoreBatteryOptimizations`**: Directs the user to the settings page to disable battery optimization for the app, allowing it to run in the background without restrictions.
+
+```kotlin
+fun isGranted(permission: String, context: Context): PermissionStats?
+```
+A helper function to check if a specific Runtime Permission has already been granted.
+- **Inputs**: The `permission` string (e.g., `Manifest.permission.CAMERA`) and `context`.
+- **Returns**: The permission status as a `PermissionStats` value (e.g., `PERMISSION_GRANTED` or `PERMISSION_DENIED`).
+
+```kotlin
+class MultiplePermissionsState(
+    val permissions: List<String>,
+    val allPermissionsGranted: Boolean,
+    val shouldShowRationale: Boolean,
+    val launchMultiplePermissionRequest: () -> Unit
+)
+```
+A class for holding the state of multiple permission requests in Jetpack Compose.
+- **`permissions`**: The list of requested permissions.
+- **`allPermissionsGranted`**: `true` if all permissions are granted.
+- **`shouldShowRationale`**: Indicates the need to show an explanation to the user before re-requesting.
+- **`launchMultiplePermissionRequest`**: A function to execute the permission request dialog for the listed permissions.
+
+```kotlin
+@Composable
+fun rememberMultiplePermissionsState(permissions: List<String>): MultiplePermissionsState
+```
+This composable checks the status of multiple different permissions (a list of strings) and returns them as a `MultiplePermissionsState` object, which includes their current status and the dialog invocation function.
+
+```kotlin
+enum class PermissionStatus {
+    GRANTED,
+    DENIED_SHOULD_SHOW_RATIONALE,
+    PERMANENTLY_DENIED
+}
+```
+An enum to display permission status details, including `GRANTED`, `DENIED_SHOULD_SHOW_RATIONALE` (denied but needs explanation), or `PERMANENTLY_DENIED`.
+
+```kotlin
+class PermissionState(
+    val permission: String,
+    val status: PermissionStatus,
+    val launchPermissionRequest: () -> Unit
+)
+```
+A class for holding the state of a specific permission request in Jetpack Compose.
+- Includes the `permission` name, its current `status`, and the `launchPermissionRequest` function to invoke the permission request.
+
+```kotlin
+@Composable
+fun rememberPermissionState(permission: String): PermissionState
+```
+A composable to get and observe the state of a permission during the Compose UI lifecycle. Returns a `PermissionState`.
+
+```kotlin
+enum class PermissionStats {
+    PERMISSION_GRANTED,
+    PERMISSION_DENIED
+}
+```
+A simple enum to specify the overall status of a permission. Its Companion object has a `fromNumber` function to convert Android return codes (`PackageManager`) into values of this class.
+
+```kotlin
+@Composable
+fun RequestMultiplePermissions(
+    permissions: List<String>,
+    onGrant: () -> Unit,
+    onDenied: () -> Unit
+)
+```
+A Headless Effect composable that requests the list of permissions provided in the `permissions` variable as soon as it is loaded onto the screen.
+- **`onGrant`**: Executed when all permissions are successfully received.
+- **`onDenied`**: Invoked if at least one permission is denied.
+
+```kotlin
+@Composable
+fun RequestPermission(
+    permission: String,
+    onGrant: () -> Unit,
+    onDenied: () -> Unit
+)
+```
+A Headless Effect composable to request a specific `permission`.
+- `onGrant` is invoked immediately if the permission is already held, or after user approval. If denied, `onDenied` is executed.
+
+```kotlin
+object SpecialPermissionsHelper {
+    fun canDrawOverlays(context: Context): Boolean
+    fun requestOverlayPermission(context: Context)
+}
+```
+A helper class to check and request special OS permissions, specifically drawing over other apps (System Alert Window).
+- **`canDrawOverlays`**: Checks the Overlay permission and returns a `Boolean`.
+- **`requestOverlayPermission`**: Requests permission to draw over apps by directing the user to the settings section.

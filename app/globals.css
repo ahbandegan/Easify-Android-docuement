@@ -5,8 +5,8 @@
 @source "../node_modules/fumadocs-ui/dist/**/*.js";
 
 body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
+  background-color: var(--color-fd-background);
+  color: var(--color-fd-foreground);
 }
 
 /* Fix RTL layout for code blocks */
@@ -49,3 +49,6 @@ p code, li code, h1 code, h2 code, h3 code, a code, td code, th code {
   border-radius: 0.25rem !important;
   white-space: nowrap !important;
 }
+  
+/* Hide theme toggle */  
+button[aria-label*="theme"], button[aria-label*="Theme"], button[aria-label*="تم"] { display: none !important; }

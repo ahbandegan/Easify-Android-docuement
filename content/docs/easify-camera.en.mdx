@@ -1,0 +1,134 @@
+---
+title: easify-camera
+description: Very simple setup for Camera in Jetpack Compose
+---
+
+# easify-camera
+
+The `easify-camera` module provides tools for working with the camera, taking photos, and scanning QR codes natively in Jetpack Compose. This module relies on CameraX and hides the complexities of its configuration from the developer.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-camera:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Using `CameraPreview`
+To display a live camera preview on the screen, you can use the `CameraPreview` composable along with `rememberCameraState` which automatically binds the lifecycle.
+
+```kotlin
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_camera.CameraPreview
+import ir.amirhesambandegan.easify_camera.rememberCameraState
+
+@Composable
+fun SimpleCameraScreen() {
+    val cameraState = rememberCameraState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Live camera preview
+        CameraPreview(
+            state = cameraState,
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Button to switch camera (Front/Back)
+        Button(
+            onClick = { cameraState.toggleCamera() },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Text("Switch Camera")
+        }
+    }
+}
+```
+
+### 2. QR Code Scanner (`QrCodeScannerView`)
+This module provides a ready-made composable for scanning QR codes that you can easily use in Compose without needing to manually process image frames.
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_camera.QrCodeScannerView
+
+@Composable
+fun QrScannerScreen() {
+    var scannedValue by remember { mutableStateOf("No code scanned yet") }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            text = "Scan Result: $scannedValue",
+            modifier = Modifier.padding(16.dp)
+        )
+
+        QrCodeScannerView(
+            modifier = Modifier.weight(1f),
+            onQrCodeScanned = { result ->
+                scannedValue = result
+            }
+        )
+    }
+}
+```
+
+## API Reference
+
+### CameraState
+```kotlin
+enum class EasifyCameraLens { BACK, FRONT }
+enum class EasifyFlashMode { OFF, ON, AUTO }
+
+class CameraState(private val context: Context, private val lifecycleOwner: LifecycleOwner) {
+    val lensFacing: EasifyCameraLens
+    val flashMode: EasifyFlashMode
+    val isTorchEnabled: Boolean
+
+    fun toggleLens(previewView: PreviewView)
+    fun toggleTorch()
+    fun setFlash(mode: EasifyFlashMode)
+    fun setZoom(linearZoom: Float)
+    suspend fun takePicture(outputDirectory: File = context.cacheDir): Result<Uri>
+}
+
+@Composable
+fun rememberCameraState(): CameraState
+```
+Manages the state of the camera. The `rememberCameraState` creates and binds the class instance. The methods `toggleLens` (requires a View for updating), `toggleTorch`, `setFlash` and `setZoom` change device settings. The `takePicture` function captures a photo and returns the photo URI (`Result<Uri>`).
+
+### CameraPreview
+```kotlin
+@Composable
+fun CameraPreview(
+    cameraState: CameraState,
+    modifier: Modifier = Modifier,
+    scaleType: PreviewView.ScaleType = PreviewView.ScaleType.FILL_CENTER
+)
+```
+A Compose view for showing the camera. Takes the `cameraState`, visual `modifier`, and `scaleType` scaling enum.
+
+### QrCodeScannerView
+```kotlin
+@Composable
+fun QrCodeScannerView(
+    modifier: Modifier = Modifier,
+    onBarcodeDetected: (String) -> Unit
+)
+```
+A ready-made view for barcode scanning. In addition to `modifier`, it receives the `onBarcodeDetected` callback, which passes the detected barcode text as a string upon detection.

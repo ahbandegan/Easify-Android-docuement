@@ -1,0 +1,257 @@
+---
+title: easify-storage
+description: Usage guide for the easify-storage module
+---
+
+# easify-storage
+
+This module provides powerful tools for securely and non-securely managing memory and storing data. From storing encrypted files to working with Jetpack DataStore in the simplest way possible.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-storage:2.1.0")
+```
+
+## Usage Guide
+
+### Secure Storage with `DataStoreController`
+
+The `DataStoreController` class provides a simple UI for reading, writing, and observing preferences in Jetpack DataStore, which also supports encryption.
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.datastore.preferences.core.stringPreferencesKey
+import ir.amirhesambandegan.easify_storage.DataStoreController
+import kotlinx.coroutines.launch
+
+@Composable
+fun DataStoreExampleScreen() {
+    val context = LocalContext.current
+    val dataStoreController = remember { DataStoreController(context) }
+    val coroutineScope = rememberCoroutineScope()
+    
+    // Define a key
+    val tokenKey = stringPreferencesKey("user_token")
+    
+    // Observe data reactively and securely
+    val token by dataStoreController.observeSecure(tokenKey).collectAsState(initial = null)
+
+    Column {
+        Text("Current token: ${token ?: "Not available"}")
+
+        Button(onClick = {
+            coroutineScope.launch {
+                // Securely save value encrypted
+                dataStoreController.saveSecure(tokenKey, "MySuperSecretToken123")
+            }
+        }) {
+            Text("Save Secure Token")
+        }
+
+        Button(onClick = {
+            coroutineScope.launch {
+                dataStoreController.remove(tokenKey)
+            }
+        }) {
+            Text("Delete Token")
+        }
+    }
+}
+```
+
+### Working with Encrypted Files (`SecureFileStorage`)
+
+If you need to store files in device memory and ensure their content security, you can use `SecureFileStorage`. This tool uses Jetpack Security Crypto.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_storage.SecureFileStorage
+import java.io.File
+
+@Composable
+fun SecureFileExample() {
+    val context = LocalContext.current
+    val secureFile = File(context.filesDir, "secret_data.txt")
+    val content = remember { mutableStateOf("") }
+
+    Column {
+        Text("File content: ${content.value}")
+
+        Button(onClick = {
+            // Write securely and encrypted to file
+            SecureFileStorage.writeSecureString(context, secureFile, "This is a strictly confidential message!")
+        }) {
+            Text("Write to Secure File")
+        }
+
+        Button(onClick = {
+            if (secureFile.exists()) {
+                // Read and decrypt file
+                content.value = SecureFileStorage.readSecureString(context, secureFile)
+            }
+        }) {
+            Text("Read from Secure File")
+        }
+    }
+}
+```
+
+## API Reference
+
+### AppStorageMonitor
+```kotlin
+object AppStorageMonitor
+```
+A helper object to monitor and manage app memory and cache.
+
+```kotlin
+fun getAppCacheSize(context: Context): Long
+```
+Calculates the total size of the app's internal and external cache directories.
+- **Returns:** `Long` (Total cache directory size in bytes)
+
+```kotlin
+fun clearAppCache(context: Context)
+```
+Completely clears the app's internal and external cache directories.
+
+### BackupEngine
+```kotlin
+object BackupEngine
+```
+An object responsible for backing up and extracting local app data.
+
+```kotlin
+fun exportAppBackup(context: Context, outputFile: File): Boolean
+```
+Creates a standard zip archive containing the app's databases, DataStore, and SharedPreferences.
+
+### BaseDao
+```kotlin
+@Dao
+interface BaseDao<T>
+```
+A Base DAO interface for the Room database to reduce boilerplate code.
+
+```kotlin
+@Insert(onConflict = OnConflictStrategy.REPLACE)
+suspend fun insert(entity: T): Long
+
+@Insert(onConflict = OnConflictStrategy.REPLACE)
+suspend fun insertAll(vararg entity: T)
+
+@Insert(onConflict = OnConflictStrategy.REPLACE)
+suspend fun insertAll(entities: List<T>)
+
+@Update
+suspend fun update(entity: T)
+
+@Update
+suspend fun updateAll(vararg entity: T)
+
+@Delete
+suspend fun delete(entity: T)
+```
+
+### DataStoreController
+```kotlin
+class DataStoreController(context: Context)
+```
+A class for reactive and secure control of Jetpack Preferences DataStore.
+
+```kotlin
+suspend fun <T> update(key: Preferences.Key<T>, value: T): Boolean
+suspend fun <T> get(key: Preferences.Key<T>): T?
+fun <T> observe(key: Preferences.Key<T>): Flow<T?>
+suspend fun <T> remove(key: Preferences.Key<T>)
+suspend fun clear()
+suspend fun saveSecure(key: Preferences.Key<String>, value: String): Boolean
+suspend fun getSecure(key: Preferences.Key<String>): String?
+fun observeSecure(key: Preferences.Key<String>): Flow<String?>
+```
+
+### FileAnalyzer
+```kotlin
+object FileAnalyzer
+```
+A helper object to analyze files, such as calculating size and file hash.
+
+```kotlin
+fun formatFileSize(sizeInBytes: Long): String
+```
+Formats file size into a readable string (e.g., 1.50 MB).
+
+```kotlin
+fun getFileChecksum(file: File, algorithm: String = "SHA-256"): String?
+```
+Calculates the cryptographic checksum of the file.
+
+### PreferenceKeys
+```kotlin
+object PreferenceKeys
+```
+A helper object to quickly create DataStore keys.
+
+```kotlin
+fun stringKey(name: String): Preferences.Key<String>
+fun intKey(name: String): Preferences.Key<Int>
+// ... and other types
+```
+
+### ScopedStorageMaster
+```kotlin
+fun Context.saveImageToGallery(bitmap: Bitmap, filename: String, mimeType: String = "image/jpeg"): Boolean
+```
+Saves an image to the user's device gallery using Scoped Storage.
+
+### SecureFileStorage
+```kotlin
+object SecureFileStorage
+```
+A helper object for secure file reading and writing using the Crypto library.
+
+```kotlin
+fun getEncryptedFile(context: Context, file: File): EncryptedFile
+fun writeSecureString(context: Context, file: File, content: String)
+fun readSecureString(context: Context, file: File): String
+```
+
+### SecureObjectMapper
+```kotlin
+suspend inline fun <reified T> DataStoreController.saveObjectSecure(key: Preferences.Key<String>, value: T): Boolean
+suspend inline fun <reified T> DataStoreController.getObjectSecure(key: Preferences.Key<String>): T?
+```
+Encrypts and decrypts complex objects by serializing them to JSON using Gson.
+
+### SmartCacheManager
+```kotlin
+object SmartCacheManager
+```
+A helper object to temporarily store data using a Time-To-Live (TTL) mechanism.
+
+```kotlin
+fun saveWithTTL(context: Context, key: String, data: String, ttlMillis: Long)
+fun getOrNull(context: Context, key: String): String?
+fun cleanExpiredCaches(context: Context)
+```
+
+### dataStore
+```kotlin
+val Context.dataStore: DataStore<Preferences>
+```
+A lazy helper property to access the singleton instance of DataStore.

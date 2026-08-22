@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
-export default function HomePage() {
+export default async function HomePage(props: { params: Promise<{ lang: string }> }) {
+  const params = await props.params;
   return (
     <main className="flex flex-1 flex-col">
       <section className="relative w-full overflow-hidden px-6 py-20">
@@ -18,7 +19,7 @@ export default function HomePage() {
             کتابخانه جامع کامپوننت‌ها و ابزارهای اندروید با تمرکز بر معماری کاتلین. فقط کپی کنید، پیست کنید و لذت ببرید.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-black dark:bg-white px-4 text-sm font-medium text-white dark:text-black transition-colors hover:opacity-90" href="/docs">
+            <Link className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-black dark:bg-white px-4 text-sm font-medium text-white dark:text-black transition-colors hover:opacity-90" href={`/${params.lang}/docs`}>
               شروع مستندات
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-left size-4 mr-2" aria-hidden="true">
                 <path d="m12 19-7-7 7-7"></path>

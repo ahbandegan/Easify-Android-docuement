@@ -1,0 +1,197 @@
+---
+title: easify-sensor
+description: Usage guide for the easify-sensor module
+---
+
+# easify-sensor
+
+This module provides simple and practical tools for working with the device's hardware sensors (such as accelerometer, proximity, light, etc.) in Jetpack Compose, allowing you to access sensor data without dealing with the complexities of `SensorManager`.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-sensor:2.1.0")
+```
+
+## Usage Guide
+
+### Observing Sensor Data with `rememberSensorObserver`
+
+Using the `rememberSensorObserver` composable, you can easily access data from a specific sensor. This function returns a `SensorObserver` that you can start or stop.
+
+**Example: Using the Proximity Sensor**
+
+```kotlin
+import android.hardware.Sensor
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import ir.amirhesambandegan.easify_sensor.rememberSensorObserver
+
+@Composable
+fun ProximitySensorScreen() {
+    // Create observer for proximity sensor
+    val proximityObserver = rememberSensorObserver(sensorType = Sensor.TYPE_PROXIMITY)
+    
+    // Get the current sensor state as State
+    val sensorEvent by proximityObserver.sensorEvent.collectAsState(initial = null)
+
+    DisposableEffect(Unit) {
+        proximityObserver.start() // Start receiving data
+        onDispose {
+            proximityObserver.stop() // Stop receiving data to save battery
+        }
+    }
+
+    Column {
+        Text("Raw Sensor Value:")
+        sensorEvent?.let { event ->
+            // Convert raw data to ProximityData object
+            val proximityData = event.toProximityData()
+            
+            Text("Distance: ${proximityData.distance} cm")
+            if (proximityData.isNear) {
+                Text("Warning: An object is near the device!")
+            } else {
+                Text("Normal status (Object is far)")
+            }
+        }
+    }
+}
+```
+
+### Supporting Multi-axis Data (e.g., Accelerometer)
+
+For sensors that have X, Y, and Z values, you can use the `toThreeAxisData()` method.
+
+```kotlin
+import android.hardware.Sensor
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import ir.amirhesambandegan.easify_sensor.rememberSensorObserver
+
+@Composable
+fun AccelerometerScreen() {
+    val accelerometerObserver = rememberSensorObserver(sensorType = Sensor.TYPE_ACCELEROMETER)
+    val sensorEvent by accelerometerObserver.sensorEvent.collectAsState(initial = null)
+
+    DisposableEffect(Unit) {
+        accelerometerObserver.start()
+        onDispose { accelerometerObserver.stop() }
+    }
+
+    Column {
+        sensorEvent?.let { event ->
+            val data = event.toThreeAxisData()
+            Text("X: ${data.x}")
+            Text("Y: ${data.y}")
+            Text("Z: ${data.z}")
+        }
+    }
+}
+```
+
+## API Reference
+
+- **`EasifySensorEvent`**
+```kotlin
+data class EasifySensorEvent(
+    val values: FloatArray,
+    val accuracy: Int,
+    val timestamp: Long
+)
+```
+A Data Class for holding sensor information.
+**Parameters:**
+- `values`: FloatArray containing sensor values.
+- `accuracy`: Sensor accuracy.
+- `timestamp`: Time the event was received in nanoseconds.
+
+- **`EasifySensorEvent.toThreeAxisData()`**
+```kotlin
+fun toThreeAxisData(): ThreeAxisData
+```
+Converts raw event values into a `ThreeAxisData` class containing x, y, and z.
+**Returns:** An instance of `ThreeAxisData`.
+
+- **`EasifySensorEvent.toProximityData()`**
+```kotlin
+fun toProximityData(): ProximityData
+```
+Converts raw values into the `ProximityData` class, specific to the proximity sensor.
+**Returns:** An instance of `ProximityData`.
+
+- **`EasifySensorEvent.toSingleValueData()`**
+```kotlin
+fun toSingleValueData(): SingleValueData
+```
+Converts values for sensors that only have a single value (like light) into `SingleValueData`.
+**Returns:** An instance of `SingleValueData`.
+
+- **`rememberSensorObserver()`**
+```kotlin
+@Composable
+fun rememberSensorObserver(
+    sensorType: Int,
+    samplingPeriod: Int = SensorManager.SENSOR_DELAY_UI
+): SensorObserver
+```
+A composable function to create and hold a `SensorObserver` object in the composition.
+**Parameters:**
+- `sensorType`: Type of hardware sensor.
+- `samplingPeriod`: Sensor sampling delay.
+**Returns:** An instance of `SensorObserver`.
+
+- **`ThreeAxisData`**
+```kotlin
+data class ThreeAxisData(val x: Float, val y: Float, val z: Float)
+```
+A class for representing three-axis data.
+
+- **`ProximityData`**
+```kotlin
+data class ProximityData(val distance: Float, val isNear: Boolean)
+```
+A class for representing proximity sensor data.
+
+- **`SingleValueData`**
+```kotlin
+data class SingleValueData(val value: Float)
+```
+A class for single-value data.
+
+- **`SensorObserver`**
+```kotlin
+class SensorObserver(
+    private val context: Context,
+    private val sensorType: Int,
+    private val samplingPeriod: Int = SensorManager.SENSOR_DELAY_UI
+)
+```
+A class for observing a specific sensor and receiving its data.
+
+- **`SensorObserver.sensorData`**
+```kotlin
+val sensorData: Flow<EasifySensorEvent>
+```
+A Flow variable that emits sensor events.
+
+- **`SensorUtils.hasSensor()`**
+```kotlin
+fun hasSensor(context: Context, sensorType: Int): Boolean
+```
+Checks if the device has the specified sensor.
+**Returns:** Boolean, `true` if the sensor exists, otherwise `false`.
+
+- **`SensorUtils.getAllAvailableSensors()`**
+```kotlin
+fun getAllAvailableSensors(context: Context): List<Sensor>
+```
+Returns a list of all available sensors on the device.

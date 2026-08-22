@@ -1,0 +1,197 @@
+---
+title: easify-sensor
+description: Benutzerhandbuch für das Modul easify-sensor
+---
+
+# easify-sensor
+
+Dieses Modul bietet einfache und praktische Werkzeuge für die Arbeit mit den Hardware-Sensoren des Geräts (wie Beschleunigungsmesser, Näherungssensor, Licht usw.) in Jetpack Compose. Damit können Sie auf Sensordaten zugreifen, ohne sich mit der Komplexität des `SensorManager` befassen zu müssen.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-sensor:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### Beobachten von Sensordaten mit `rememberSensorObserver`
+
+Mit dem Composable `rememberSensorObserver` können Sie ganz einfach auf Daten eines bestimmten Sensors zugreifen. Diese Funktion gibt einen `SensorObserver` zurück, den Sie starten oder stoppen können.
+
+**Beispiel: Verwendung des Näherungssensors (Proximity Sensor)**
+
+```kotlin
+import android.hardware.Sensor
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import ir.amirhesambandegan.easify_sensor.rememberSensorObserver
+
+@Composable
+fun ProximitySensorScreen() {
+    // Observer für Näherungssensor erstellen
+    val proximityObserver = rememberSensorObserver(sensorType = Sensor.TYPE_PROXIMITY)
+    
+    // Aktuellen Sensorstatus als State abrufen
+    val sensorEvent by proximityObserver.sensorEvent.collectAsState(initial = null)
+
+    DisposableEffect(Unit) {
+        proximityObserver.start() // Empfang von Daten starten
+        onDispose {
+            proximityObserver.stop() // Empfang stoppen, um Akku zu sparen
+        }
+    }
+
+    Column {
+        Text("Roher Sensorwert:")
+        sensorEvent?.let { event ->
+            // Rohdaten in ProximityData-Objekt konvertieren
+            val proximityData = event.toProximityData()
+            
+            Text("Entfernung: ${proximityData.distance} cm")
+            if (proximityData.isNear) {
+                Text("Warnung: Ein Objekt befindet sich in der Nähe des Geräts!")
+            } else {
+                Text("Normaler Status (Objekt ist weit weg)")
+            }
+        }
+    }
+}
+```
+
+### Unterstützung von Mehrachsendaten (z. B. Beschleunigungsmesser)
+
+Für Sensoren, die X-, Y- und Z-Werte aufweisen, können Sie die Methode `toThreeAxisData()` verwenden.
+
+```kotlin
+import android.hardware.Sensor
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import ir.amirhesambandegan.easify_sensor.rememberSensorObserver
+
+@Composable
+fun AccelerometerScreen() {
+    val accelerometerObserver = rememberSensorObserver(sensorType = Sensor.TYPE_ACCELEROMETER)
+    val sensorEvent by accelerometerObserver.sensorEvent.collectAsState(initial = null)
+
+    DisposableEffect(Unit) {
+        accelerometerObserver.start()
+        onDispose { accelerometerObserver.stop() }
+    }
+
+    Column {
+        sensorEvent?.let { event ->
+            val data = event.toThreeAxisData()
+            Text("X: ${data.x}")
+            Text("Y: ${data.y}")
+            Text("Z: ${data.z}")
+        }
+    }
+}
+```
+
+## API-Referenz
+
+- **`EasifySensorEvent`**
+```kotlin
+data class EasifySensorEvent(
+    val values: FloatArray,
+    val accuracy: Int,
+    val timestamp: Long
+)
+```
+Eine Datenklasse (Data Class) zur Speicherung von Sensorinformationen.
+**Parameter:**
+- `values`: FloatArray mit den Sensorwerten.
+- `accuracy`: Genauigkeit des Sensors.
+- `timestamp`: Zeit, zu der das Ereignis empfangen wurde, in Nanosekunden.
+
+- **`EasifySensorEvent.toThreeAxisData()`**
+```kotlin
+fun toThreeAxisData(): ThreeAxisData
+```
+Konvertiert rohe Ereigniswerte in eine `ThreeAxisData`-Klasse, die x, y und z enthält.
+**Rückgabe:** Eine Instanz von `ThreeAxisData`.
+
+- **`EasifySensorEvent.toProximityData()`**
+```kotlin
+fun toProximityData(): ProximityData
+```
+Konvertiert Rohwerte in die `ProximityData`-Klasse, die spezifisch für den Näherungssensor ist.
+**Rückgabe:** Eine Instanz von `ProximityData`.
+
+- **`EasifySensorEvent.toSingleValueData()`**
+```kotlin
+fun toSingleValueData(): SingleValueData
+```
+Konvertiert Werte für Sensoren, die nur einen einzigen Wert haben (wie Licht), in `SingleValueData`.
+**Rückgabe:** Eine Instanz von `SingleValueData`.
+
+- **`rememberSensorObserver()`**
+```kotlin
+@Composable
+fun rememberSensorObserver(
+    sensorType: Int,
+    samplingPeriod: Int = SensorManager.SENSOR_DELAY_UI
+): SensorObserver
+```
+Eine Composable-Funktion zum Erstellen und Speichern eines `SensorObserver`-Objekts in der Komposition.
+**Parameter:**
+- `sensorType`: Art des Hardware-Sensors.
+- `samplingPeriod`: Verzögerung der Sensor-Abtastung.
+**Rückgabe:** Eine Instanz von `SensorObserver`.
+
+- **`ThreeAxisData`**
+```kotlin
+data class ThreeAxisData(val x: Float, val y: Float, val z: Float)
+```
+Eine Klasse zur Darstellung von Drei-Achsen-Daten.
+
+- **`ProximityData`**
+```kotlin
+data class ProximityData(val distance: Float, val isNear: Boolean)
+```
+Eine Klasse zur Darstellung von Näherungssensordaten.
+
+- **`SingleValueData`**
+```kotlin
+data class SingleValueData(val value: Float)
+```
+Eine Klasse für Einzelwertdaten.
+
+- **`SensorObserver`**
+```kotlin
+class SensorObserver(
+    private val context: Context,
+    private val sensorType: Int,
+    private val samplingPeriod: Int = SensorManager.SENSOR_DELAY_UI
+)
+```
+Eine Klasse zum Beobachten eines bestimmten Sensors und zum Empfangen seiner Daten.
+
+- **`SensorObserver.sensorData`**
+```kotlin
+val sensorData: Flow<EasifySensorEvent>
+```
+Eine Flow-Variable, die Sensorereignisse ausgibt (emittiert).
+
+- **`SensorUtils.hasSensor()`**
+```kotlin
+fun hasSensor(context: Context, sensorType: Int): Boolean
+```
+Überprüft, ob das Gerät über den angegebenen Sensor verfügt.
+**Rückgabe:** Boolean, `true`, wenn der Sensor vorhanden ist, andernfalls `false`.
+
+- **`SensorUtils.getAllAvailableSensors()`**
+```kotlin
+fun getAllAvailableSensors(context: Context): List<Sensor>
+```
+Gibt eine Liste aller verfügbaren Sensoren auf dem Gerät zurück.

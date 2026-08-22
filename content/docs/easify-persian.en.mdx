@@ -1,0 +1,168 @@
+---
+title: easify-persian
+description: Usage guide for the easify-persian module
+---
+
+# easify-persian
+
+This module is a set of practical tools for working with the Jalali (Persian) calendar, dates, and Persian numbers in Jetpack Compose. With this module, you can have Persian date picker dialogs and easily convert numbers and text to standard Persian formats.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-persian:2.1.0")
+```
+
+## Usage Guide
+
+### Using the Persian Date Picker Dialog
+The `PersianDatePickerDialog` composable displays a beautiful and native dialog to the user for selecting a Shamsi (Jalali) date.
+
+**Example usage in Jetpack Compose:**
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import ir.amirhesambandegan.easify_persian.PersianDatePickerDialog
+
+@Composable
+fun DatePickerExampleScreen() {
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedDateText by remember { mutableStateOf("No date selected") }
+
+    Column {
+        Button(onClick = { showDialog = true }) {
+            Text("Select Birth Date")
+        }
+
+        Text(text = selectedDateText)
+    }
+
+    if (showDialog) {
+        PersianDatePickerDialog(
+            onDismissRequest = { showDialog = false },
+            onDateSelected = { jalaliDate ->
+                selectedDateText = "Selected date: ${jalaliDate.year}/${jalaliDate.month}/${jalaliDate.day}"
+                showDialog = false
+            }
+        )
+    }
+}
+```
+
+## API Reference
+
+```kotlin
+data class JalaliDate(val year: Int, val month: Int, val day: Int)
+```
+A data class for holding a Shamsi (Jalali) date.
+- **Parameters:** `year` (Shamsi year), `month` (Shamsi month from 1 to 12), `day` (day of the month from 1 to 31).
+
+```kotlin
+fun Date.toJalali(): JalaliDate
+```
+Converts a Gregorian `Date` object to a `JalaliDate` (Shamsi date).
+- **Returns:** An instance of `JalaliDate` equivalent to the Gregorian date.
+
+```kotlin
+fun JalaliDate.toGregorian(): Date
+```
+Converts a Shamsi date (`JalaliDate`) to a Gregorian date (`Date`).
+- **Returns:** An instance of `Date` equivalent to the Shamsi date.
+
+```kotlin
+fun JalaliDate.getMonthName(): String
+```
+Returns the name of the Shamsi month corresponding to the date (e.g., "Farvardin", "Ordibehesht").
+- **Returns:** The month's name as a String. Returns "Unknown" if the value is invalid.
+
+```kotlin
+fun JalaliDate.isLeapYear(): Boolean
+```
+Checks if the specified Shamsi year is a leap year.
+- **Returns:** `true` if it's a leap year, otherwise `false`.
+
+```kotlin
+@Composable
+fun PersianDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    onDateSelected: (JalaliDate) -> Unit,
+    initialDate: JalaliDate = Date().toJalali()
+)
+```
+Displays a Jetpack Compose dialog for selecting a Shamsi date.
+- **Parameters:** 
+  - `onDismissRequest`: Function invoked when canceling and closing the dialog.
+  - `onDateSelected`: Function invoked when a date is confirmed, taking the selected `JalaliDate` as input.
+  - `initialDate`: The default date displayed in the dialog (defaults to the current day).
+
+```kotlin
+fun String.toStandardPersian(): String
+```
+Standardizes Persian text by correcting Arabic characters (like 'ي' to 'ی' and 'ك' to 'ک'), removing vowels (E'rab), and converting English numbers to Persian numbers.
+- **Returns:** Standardized Persian text as a String.
+
+```kotlin
+fun Long.toPersianTimeAgo(): String
+```
+Converts a time (in milliseconds) into a readable Persian phrase for elapsed time (e.g., "5 minutes ago", "yesterday").
+- **Returns:** The Persian phrase corresponding to the past time.
+
+```kotlin
+@Composable
+fun PersianTimePickerDialog(
+    onDismissRequest: () -> Unit,
+    onTimeSelected: (hour: Int, minute: Int) -> Unit,
+    initialHour: Int = 12,
+    initialMinute: Int = 0
+)
+```
+Displays a Jetpack Compose dialog for selecting time.
+- **Parameters:**
+  - `onDismissRequest`: Function invoked when canceling the selection.
+  - `onTimeSelected`: Function invoked after confirming the time with the selected `hour` and `minute`.
+  - `initialHour`: Default hour (defaults to 12).
+  - `initialMinute`: Default minute (defaults to 0).
+
+```kotlin
+fun String.isValidNationalCode(): Boolean
+```
+Evaluates an Iranian National Code by checking its length (10 digits) and checksum algorithm.
+- **Returns:** `true` if the National Code is valid, otherwise `false`.
+
+```kotlin
+fun String.isValidPersianMobile(): Boolean
+```
+Evaluates whether an Iranian mobile number is valid (supports various prefixes like 09, +989, 989).
+- **Returns:** `true` if the mobile number is valid, otherwise `false`.
+
+```kotlin
+fun String.isValidBankCard(): Boolean
+```
+Evaluates a 16-digit Iranian bank card number using the Luhn algorithm.
+- **Returns:** `true` if the card number is valid, otherwise `false`.
+
+```kotlin
+fun Number.toPersianCurrencyText(unit: String = "Toman"): String
+```
+Converts a number to equivalent Persian currency text (e.g., 15000 to "پانزده هزار تومان").
+- **Parameters:** `unit` the currency unit (defaults to "Toman").
+- **Returns:** Formatted string for the monetary amount.
+
+```kotlin
+fun String.toPersianDigits(): String
+```
+Converts all English digits within a string to their equivalent Persian digits.
+- **Returns:** A new string with Persian numbers.
+
+```kotlin
+fun Long.toPersianWords(): String
+```
+Converts a number (of type Long) into Persian words (e.g., 1250 to "یک هزار و دویست و پنجاه").
+- **Returns:** The numerical representation in Persian words.

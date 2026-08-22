@@ -1,0 +1,200 @@
+---
+title: easify-context
+description: Extensions and utilities for Context in Android
+---
+
+# easify-context
+
+The `easify-context` module provides a set of highly practical Kotlin Extension Functions for `Context`. These extensions make working with standard Android capabilities—such as Toast, Keyboard, Clipboard, Intents, SharedPreferences, Device Services, and Screen properties—extremely simple and readable.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-context:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Showing a Toast
+Instead of writing the long `Toast.makeText(...)` code, you can just call `.toast()`.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_context.toast
+
+@Composable
+fun ToastExample() {
+    val context = LocalContext.current
+
+    Button(onClick = { context.toast("This is a simple Toast!") }) {
+        Text("Show Toast")
+    }
+}
+```
+
+### 2. Keyboard Management
+Managing the keyboard becomes much easier with the `hideKeyboard` extension.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import ir.amirhesambandegan.easify_context.hideKeyboard
+
+@Composable
+fun KeyboardExample() {
+    val context = LocalContext.current
+    val view = LocalView.current
+
+    Button(onClick = { context.hideKeyboard(view) }) {
+        Text("Hide Keyboard")
+    }
+}
+```
+
+### 3. Clipboard Management
+Copying text to the clipboard is as easy as calling one extension function.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_context.copyToClipboard
+
+@Composable
+fun ClipboardExample() {
+    val context = LocalContext.current
+
+    Button(onClick = { context.copyToClipboard("Copied text") }) {
+        Text("Copy Text")
+    }
+}
+```
+
+## API Reference
+
+### ContextAppInfo (App Information)
+```kotlin
+fun Context.isAppInstalled(packageName: String): Boolean
+val Context.appVersionName: String
+val Context.appVersionCode: Long
+fun Context.openPlayStore(targetPackageName: String = packageName)
+```
+- `isAppInstalled`: Returns whether an app with the given package name is installed (Boolean).
+- Retrieves the app version name and code.
+- `openPlayStore`: Opens the Play Store page for the current or specified package name.
+
+### ContextDeviceState (Device Status)
+```kotlin
+val Context.isDarkThemeEnabled: Boolean
+val Context.isLocationEnabled: Boolean
+val Context.isInternetAvailable: Boolean
+fun Context.isEmulator(): Boolean
+fun Context.hasNfc(): Boolean
+fun Context.hasCameraFlash(): Boolean
+val Context.isIgnoringBatteryOptimizations: Boolean
+fun Context.requestIgnoreBatteryOptimizations()
+```
+- A set of `Boolean` properties to check features like Dark Mode, Location, Internet, NFC, etc.
+- `requestIgnoreBatteryOptimizations` prompts the user to disable battery optimizations for the app.
+
+### ContextKeyboard
+```kotlin
+fun Context.hideKeyboard(view: View?)
+fun Context.showKeyboard(view: View?)
+```
+- Functions that receive a view to hide or show the soft keyboard on the screen.
+
+### ContextNavigation
+```kotlin
+inline fun <reified T : Activity> Context.start(options: Bundle? = null, crossinline block: Intent.() -> Unit = {})
+fun Context.restartApp()
+fun Context.openWifiSettings()
+fun Context.openLocationSettings()
+fun Context.openBluetoothSettings()
+fun Context.openDisplaySettings()
+```
+- `start`: Starts an Activity cleanly using reified types.
+- The rest of the functions open various system settings pages.
+
+### ContextResources
+```kotlin
+fun Context.color(@ColorRes id: Int): Int
+fun Context.drawable(@DrawableRes id: Int): Drawable?
+fun Context.dimenPx(@DimenRes id: Int): Int
+fun Context.dimen(@DimenRes id: Int): Float
+```
+- Takes Resource IDs and directly returns the resolved value (Color, Drawable, Dimension).
+
+### ContextScreen
+```kotlin
+val Context.screenWidthPx: Int
+val Context.screenHeightPx: Int
+fun Context.dpToPx(dp: Float): Float
+fun Context.spToPx(sp: Float): Float
+fun Context.keepScreenOn(enable: Boolean)
+```
+- Retrieves screen dimensions in pixels. `dpToPx` and `spToPx` convert scale units. `keepScreenOn` determines if the screen should stay awake.
+
+### ContextServices (System Services)
+```kotlin
+val Context.inputMethodManager: InputMethodManager?
+val Context.connectivityManager: ConnectivityManager?
+val Context.notificationManager: NotificationManager?
+val Context.clipboardManager: ClipboardManager?
+val Context.windowManager: WindowManager?
+// And many other standard managers...
+```
+- Properties that give you quick and clean access to Android system services without writing `getSystemService`.
+
+### ContextSettingsPrompts
+```kotlin
+fun Context.promptEnableWifi()
+fun Context.promptInternetConnectivity()
+fun Context.promptEnableNfc()
+fun Context.promptVolumeControls()
+fun Context.promptEnableBluetooth()
+fun Context.promptEnableLocation()
+```
+- Functions that show a prompt to the user asking them to enable a specific feature (WiFi, Location, Bluetooth, etc.).
+
+### ContextToast
+```kotlin
+fun Context.toast(message: String)
+fun Context.longToast(message: String)
+```
+- Shows a quick Toast message on the screen.
+
+### ContextUtils
+```kotlin
+fun Context.findActivity(): Activity?
+fun Context.findFragmentActivity(): FragmentActivity?
+```
+- Iterates through `ContextWrapper` to find and return the underlying `Activity`.
+
+### ContextVibration
+```kotlin
+fun Context.vibrate(durationMillis: Long = 100)
+fun Context.vibratePattern(pattern: LongArray, repeatIndex: Int = -1)
+```
+- Creates a vibration based on milliseconds or an array pattern.
+
+### Other Useful Utilities
+```kotlin
+fun Context.copyToClipboard(text: String, label: String = "EasifyData")
+fun Context.getFromClipboard(): String?
+
+fun Context.makeCall(phoneNumber: String)
+fun Context.sendEmail(to: String, subject: String = "", body: String = "")
+fun Context.openBrowser(url: String)
+fun Context.shareText(text: String, title: String = "Share via")
+fun Context.openMap(lat: Double, lng: Double, label: String = "Location")
+fun Context.openAppSettings()
+```
+- Easily manages Clipboard operations, making phone calls, opening browsers, sending emails, sharing text, opening maps, and app settings via standard Intents.

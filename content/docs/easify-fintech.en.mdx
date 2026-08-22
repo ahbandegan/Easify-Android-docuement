@@ -1,0 +1,202 @@
+---
+title: easify-fintech
+description: Usage guide for the easify-fintech module
+---
+
+# easify-fintech
+
+This module contains tools and widgets related to finance and Fintech. This includes displaying balances, validating bank cards, national IDs, IBAN numbers, and date conversion.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-fintech:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Displaying Balance with Blur Effect (EasifyBalanceText)
+A ready-made widget to display an amount with currency, and the ability to hide it with a blur effect.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import ir.amirhesambandegan.easify_fintech.EasifyBalanceText
+
+@Composable
+fun BalanceExample() {
+    EasifyBalanceText(
+        balance = 12500000L,
+        currency = "Toman",
+        initiallyHidden = false,
+        useBlurEffect = true
+    )
+}
+```
+
+
+## API Reference
+
+```kotlin
+fun String.isValidLegalId(): Boolean
+```
+Checks if the given string is a valid Iranian Legal Entity ID.
+- **Returns:** `Boolean` indicating if the ID is valid.
+
+```kotlin
+fun String.isValidIranianPostalCode(): Boolean
+```
+Checks if the given string is a valid 10-digit Iranian postal code.
+- **Returns:** `Boolean` indicating validity.
+
+```kotlin
+object BillValidator
+```
+A tool for validating Iranian utility bills (Water, Electricity, Gas).
+- **Key Functions:**
+  - `fun isValidBill(billId: String, paymentId: String): Boolean`: Validates both the bill ID and payment ID.
+
+```kotlin
+fun String.isValidCardNumber(): Boolean
+```
+Validates a 16-digit bank card number using the Luhn algorithm.
+- **Returns:** `Boolean` indicating if the card number is valid.
+
+```kotlin
+fun String.formatCardNumber(): String
+```
+Formats a digit-only string into a card number format (groups of four separated by a space).
+- **Returns:** `String` formatted card number.
+
+```kotlin
+fun String.getBankName(): String?
+```
+Gets the bank name based on the first 6 digits (BIN) of the card number.
+- **Returns:** `String?` the bank name, or `null` if unrecognized.
+
+```kotlin
+fun String.extractBankOtp(): String?
+```
+Extracts a 5, 6, or 7-digit OTP from Persian bank SMS text.
+- **Returns:** `String?` the extracted one-time password.
+
+```kotlin
+object ShebaHelper
+```
+A helper tool for working with Iranian IBAN (Sheba) numbers.
+- **Key Functions:**
+  - `fun getBankNameFromSheba(sheba: String): String`: Retrieves the bank name from a Sheba string.
+
+```kotlin
+class CardNumberVisualTransformation : VisualTransformation
+```
+A visual transformation class to format a text field as a standard card number (adding a space/dash after every 4 digits).
+
+```kotlin
+class PriceVisualTransformation : VisualTransformation
+```
+A visual transformation class for price fields to separate digits into groups of three with commas.
+
+```kotlin
+class ExpirationDateVisualTransformation : VisualTransformation
+```
+A visual transformation class to format a 4-digit input into a standard card expiration date (e.g. 12/03) by inserting a slash (/).
+
+```kotlin
+@Composable
+fun EasifyBalanceText(
+    balance: Long,
+    modifier: Modifier = Modifier,
+    currency: String = "Toman",
+    initiallyHidden: Boolean = false,
+    useBlurEffect: Boolean = true
+)
+```
+A composable to display a financial balance along with the currency symbol, featuring a tap-to-hide (blur or asterisks) functionality.
+- **Parameters:** `balance`, `currency`, `initiallyHidden`, `useBlurEffect`.
+
+```kotlin
+fun Long.toPriceFormat(currency: String = "Toman"): String
+fun String.toPriceFormat(currency: String = "Toman"): String
+```
+Formats an amount (number or string) with thousand separators and appends the currency symbol.
+- **Returns:** `String` formatted price.
+
+```kotlin
+fun String.toEnglishNumbers(): String
+```
+Converts all Persian and Arabic digits in a string to English digits.
+- **Returns:** `String` containing English digits.
+
+```kotlin
+fun String.toPersianNumbers(): String
+```
+Converts all English digits in a string to Persian digits.
+- **Returns:** `String` containing Persian digits.
+
+```kotlin
+fun Long.rialToToman(): Long
+```
+Converts Rial to Toman (divides by 10).
+- **Returns:** `Long` equivalent in Toman.
+
+```kotlin
+fun Long.tomanToRial(): Long
+```
+Converts Toman to Rial (multiplies by 10).
+- **Returns:** `Long` equivalent in Rial.
+
+```kotlin
+fun Long.withTax(percent: Int = 9): Long
+```
+Adds tax to the amount based on the specified percentage (default is 9%).
+- **Returns:** `Long` amount including tax.
+
+```kotlin
+fun Long.applyDiscount(percent: Int): Long
+```
+Applies a discount percentage to the amount.
+- **Returns:** `Long` final amount after discount.
+
+```kotlin
+fun String.getMobileOperator(): String?
+```
+Detects the Iranian mobile operator (MCI, Irancell, etc.) based on the mobile prefix.
+- **Returns:** `String?` operator name.
+
+```kotlin
+fun String.isValidNationalId(): Boolean
+```
+Validates an Iranian National ID (Real Person) using the standard Checksum algorithm.
+- **Returns:** `Boolean` indicating validity.
+
+```kotlin
+fun Long.toPersianWords(): String
+fun String.toPersianWords(): String
+```
+Converts numbers into Persian words (e.g., converts 123 to "صد و بیست و سه").
+- **Returns:** `String` the number in words.
+
+```kotlin
+class ShamsiDate(var year: Int, var month: Int, var day: Int)
+```
+A lightweight class representing a Jalali (Shamsi) date.
+- **Properties:** `year`, `month`, `day`.
+
+```kotlin
+fun Long.toShamsiDate(): ShamsiDate
+```
+Converts a Unix Timestamp (in milliseconds) into a Shamsi Date.
+- **Returns:** `ShamsiDate` object representing the date.
+
+```kotlin
+fun String.isValidSheba(): Boolean
+```
+Validates an IBAN (Sheba) using the standard ISO 7064 Mod 97-10 algorithm.
+- **Returns:** `Boolean` indicating validity.
+
+```kotlin
+fun String.getShebaBankName(): String?
+```
+Detects the bank name from the 3-digit code embedded in an Iranian Sheba string.
+- **Returns:** `String?` the bank name or `null` if unrecognized.

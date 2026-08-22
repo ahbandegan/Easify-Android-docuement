@@ -1,0 +1,200 @@
+---
+title: easify-context
+description: Erweiterungen und Dienstprogramme für den Context in Android
+---
+
+# easify-context
+
+Das Modul `easify-context` bietet eine Sammlung sehr nützlicher Kotlin-Erweiterungsfunktionen (Extension Functions) für `Context`. Diese Erweiterungen machen die Arbeit mit standardmäßigen Android-Funktionen – wie Toast, Tastatur, Zwischenablage, Intents, SharedPreferences, Gerätedienste und Bildschirmeigenschaften – extrem einfach und gut lesbar.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-context:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### 1. Einen Toast anzeigen
+Anstatt den langen Code `Toast.makeText(...)` zu schreiben, können Sie einfach `.toast()` aufrufen.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_context.toast
+
+@Composable
+fun ToastExample() {
+    val context = LocalContext.current
+
+    Button(onClick = { context.toast("Dies ist ein einfacher Toast!") }) {
+        Text("Toast anzeigen")
+    }
+}
+```
+
+### 2. Tastaturverwaltung (Keyboard Management)
+Das Ausblenden der Tastatur wird mit der Erweiterung `hideKeyboard` viel einfacher.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import ir.amirhesambandegan.easify_context.hideKeyboard
+
+@Composable
+fun KeyboardExample() {
+    val context = LocalContext.current
+    val view = LocalView.current
+
+    Button(onClick = { context.hideKeyboard(view) }) {
+        Text("Tastatur ausblenden")
+    }
+}
+```
+
+### 3. Zwischenablage (Clipboard)
+Das Kopieren von Text in die Zwischenablage ist mit einer Erweiterungsfunktion ganz einfach.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_context.copyToClipboard
+
+@Composable
+fun ClipboardExample() {
+    val context = LocalContext.current
+
+    Button(onClick = { context.copyToClipboard("Kopierter Text") }) {
+        Text("Text kopieren")
+    }
+}
+```
+
+## API-Referenz
+
+### ContextAppInfo (App-Informationen)
+```kotlin
+fun Context.isAppInstalled(packageName: String): Boolean
+val Context.appVersionName: String
+val Context.appVersionCode: Long
+fun Context.openPlayStore(targetPackageName: String = packageName)
+```
+- `isAppInstalled`: Gibt zurück, ob eine App mit dem angegebenen Paketnamen installiert ist (Boolean).
+- Ruft den App-Versionsnamen und -code ab.
+- `openPlayStore`: Öffnet die Play Store-Seite für den aktuellen oder angegebenen Paketnamen.
+
+### ContextDeviceState (Gerätestatus)
+```kotlin
+val Context.isDarkThemeEnabled: Boolean
+val Context.isLocationEnabled: Boolean
+val Context.isInternetAvailable: Boolean
+fun Context.isEmulator(): Boolean
+fun Context.hasNfc(): Boolean
+fun Context.hasCameraFlash(): Boolean
+val Context.isIgnoringBatteryOptimizations: Boolean
+fun Context.requestIgnoreBatteryOptimizations()
+```
+- Eine Reihe von `Boolean`-Eigenschaften, um Funktionen wie Dunkelmodus, Standort, Internet, NFC usw. zu überprüfen.
+- `requestIgnoreBatteryOptimizations` fordert den Benutzer auf, Batterieoptimierungen für die App zu deaktivieren.
+
+### ContextKeyboard
+```kotlin
+fun Context.hideKeyboard(view: View?)
+fun Context.showKeyboard(view: View?)
+```
+- Funktionen, die eine Ansicht aufnehmen, um die Bildschirmtastatur auszublenden oder anzuzeigen.
+
+### ContextNavigation
+```kotlin
+inline fun <reified T : Activity> Context.start(options: Bundle? = null, crossinline block: Intent.() -> Unit = {})
+fun Context.restartApp()
+fun Context.openWifiSettings()
+fun Context.openLocationSettings()
+fun Context.openBluetoothSettings()
+fun Context.openDisplaySettings()
+```
+- `start`: Startet eine Activity sauber mit reified Typen.
+- Die restlichen Funktionen öffnen verschiedene Systemeinstellungen.
+
+### ContextResources
+```kotlin
+fun Context.color(@ColorRes id: Int): Int
+fun Context.drawable(@DrawableRes id: Int): Drawable?
+fun Context.dimenPx(@DimenRes id: Int): Int
+fun Context.dimen(@DimenRes id: Int): Float
+```
+- Nimmt Ressourcen-IDs an und gibt direkt den aufgelösten Wert zurück (Color, Drawable, Dimension).
+
+### ContextScreen
+```kotlin
+val Context.screenWidthPx: Int
+val Context.screenHeightPx: Int
+fun Context.dpToPx(dp: Float): Float
+fun Context.spToPx(sp: Float): Float
+fun Context.keepScreenOn(enable: Boolean)
+```
+- Ruft Bildschirmabmessungen in Pixeln ab. `dpToPx` und `spToPx` konvertieren Maßstäbe. `keepScreenOn` bestimmt, ob der Bildschirm wach bleiben soll.
+
+### ContextServices (Systemdienste)
+```kotlin
+val Context.inputMethodManager: InputMethodManager?
+val Context.connectivityManager: ConnectivityManager?
+val Context.notificationManager: NotificationManager?
+val Context.clipboardManager: ClipboardManager?
+val Context.windowManager: WindowManager?
+// Und viele andere Standardmanager...
+```
+- Eigenschaften, die Ihnen einen schnellen und sauberen Zugriff auf Android-Systemdienste ermöglichen, ohne `getSystemService` zu schreiben.
+
+### ContextSettingsPrompts
+```kotlin
+fun Context.promptEnableWifi()
+fun Context.promptInternetConnectivity()
+fun Context.promptEnableNfc()
+fun Context.promptVolumeControls()
+fun Context.promptEnableBluetooth()
+fun Context.promptEnableLocation()
+```
+- Funktionen, die dem Benutzer eine Eingabeaufforderung anzeigen, um eine bestimmte Funktion zu aktivieren (WLAN, Standort, Bluetooth usw.).
+
+### ContextToast
+```kotlin
+fun Context.toast(message: String)
+fun Context.longToast(message: String)
+```
+- Zeigt eine schnelle Toast-Nachricht auf dem Bildschirm an.
+
+### ContextUtils
+```kotlin
+fun Context.findActivity(): Activity?
+fun Context.findFragmentActivity(): FragmentActivity?
+```
+- Iteriert durch `ContextWrapper`, um die zugrunde liegende `Activity` zu finden und zurückzugeben.
+
+### ContextVibration
+```kotlin
+fun Context.vibrate(durationMillis: Long = 100)
+fun Context.vibratePattern(pattern: LongArray, repeatIndex: Int = -1)
+```
+- Erzeugt eine Vibration basierend auf Millisekunden oder einem Array-Muster.
+
+### Weitere nützliche Dienstprogramme
+```kotlin
+fun Context.copyToClipboard(text: String, label: String = "EasifyData")
+fun Context.getFromClipboard(): String?
+
+fun Context.makeCall(phoneNumber: String)
+fun Context.sendEmail(to: String, subject: String = "", body: String = "")
+fun Context.openBrowser(url: String)
+fun Context.shareText(text: String, title: String = "Share via")
+fun Context.openMap(lat: Double, lng: Double, label: String = "Location")
+fun Context.openAppSettings()
+```
+- Verwaltet einfach Zwischenablage-Operationen, das Tätigen von Anrufen, das Öffnen von Browsern, Senden von E-Mails, Teilen von Text, Öffnen von Karten und App-Einstellungen über Standard-Intents.

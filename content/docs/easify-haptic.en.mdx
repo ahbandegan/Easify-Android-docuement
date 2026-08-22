@@ -1,0 +1,156 @@
+---
+title: easify-haptic
+description: Usage guide for the easify-haptic module
+---
+
+# easify-haptic
+
+This module is a collection of tools for controlling and executing Haptic Feedback in Jetpack Compose-based Android applications. Using this module, you can provide a much better user experience by creating various vibration effects (including success, error, click vibrations, and custom patterns).
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-haptic:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Using Ready-made Haptic Impacts & Patterns
+
+The `easify-haptic` module includes convenient functions for quickly executing common haptic effects like clicks and successes.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_haptic.performClick
+import ir.amirhesambandegan.easify_haptic.performSuccess
+
+@Composable
+fun HapticFeedbackExample() {
+    val context = LocalContext.current
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Button(
+            onClick = { 
+                // Execute a simple haptic feedback for click
+                context.performClick() 
+            }
+        ) {
+            Text("Click Feedback")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { 
+                // Execute haptic feedback for a successful operation
+                context.performSuccess() 
+            }
+        ) {
+            Text("Success Feedback")
+        }
+    }
+}
+```
+
+### 2. Central Haptic Manager (EasifyHapticManager)
+
+For more precise control, complex patterns, and syncing audio with touch (Haptic Audio), you can directly use the manager class.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_haptic.EasifyHapticManager
+import ir.amirhesambandegan.easify_haptic.HapticPatterns
+
+@Composable
+fun AdvancedHapticExample() {
+    val context = LocalContext.current
+    val hapticManager = remember { EasifyHapticManager(context) }
+
+    Button(
+        onClick = { 
+            // Execute a specific vibration pattern
+            hapticManager.playPattern(HapticPatterns.DOUBLE_CLICK)
+        }
+    ) {
+        Text("Double Click Pattern")
+    }
+}
+```
+
+
+## API Reference
+
+```kotlin
+object EasifyHapticManager
+```
+A singleton object for managing the configuration and state of the system's haptic feedback.
+- **Properties:**
+  - `var globalIntensity: Float`: Sets overall vibration intensity (0.0 to 1.0).
+  - `var isHapticEnabled: Boolean`: Enables or disables vibration app-wide.
+
+```kotlin
+class AudioHapticPlayer(private val context: Context, private val audioResId: Int)
+```
+A class for playing an audio file and simultaneously generating synchronized haptic feedback (specifically for Android 12+).
+- **Functions:**
+  - `fun play()`: Starts audio playback and haptics.
+  - `fun release()`: Releases resources.
+
+```kotlin
+class PullHapticTracker(private val context: Context)
+```
+A class for tracking the progress of pull gestures (like Pull to Refresh) and generating micro-vibrations at specific intervals.
+- **Functions:**
+  - `fun onPullProgress(progress: Float)`: Checks progress (0.0 to 1.0) and triggers vibration.
+  - `fun reset()`: Resets the state.
+
+```kotlin
+object HapticHelper
+```
+A set of utility functions for providing commonly used haptic feedbacks.
+- **Functions:**
+  - `fun Context.hapticClick()`: Haptic feedback for a standard click.
+  - `fun Context.hapticSuccess()`: Haptic feedback for a successful operation (soft double vibration).
+  - `fun Context.hapticError()`: Haptic feedback for an error (strong triple vibration).
+
+```kotlin
+fun Context.hapticImpactLight()
+fun Context.hapticImpactMedium()
+fun Context.hapticImpactHeavy()
+fun Context.hapticTick()
+fun Context.hapticKeypress()
+```
+Extension functions for generating different types of Impacts with varying intensities (light, medium, heavy, tick, and keyboard keypress).
+
+```kotlin
+fun Modifier.hapticClickable(interactionSource: MutableInteractionSource? = null, onClick: () -> Unit): Modifier
+```
+A replacement for the standard `Modifier.clickable`, which generates a light haptic feedback when pressed down and a medium feedback when released up.
+
+```kotlin
+fun Modifier.hapticPressIndicator(): Modifier
+```
+A Modifier that generates only a light haptic feedback on press, without overriding default click behavior.
+
+```kotlin
+fun Context.hapticHeartbeat()
+fun Context.hapticWarning()
+fun Context.hapticSOS()
+fun Context.hapticMachineGun()
+```
+Functions for generating specific vibration patterns like heartbeat, warning, SOS (Morse code), and machine gun.
+
+```kotlin
+fun HapticFeedback.performClick()
+```
+An extension function for `HapticFeedback` instances in Compose, simulating the semantic feedback of a click or text handle move.
+
+```kotlin
+fun HapticFeedback.performSuccess()
+```
+An extension function for semantic feedback of a successful operation or long press.

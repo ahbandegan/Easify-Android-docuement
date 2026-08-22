@@ -1,0 +1,176 @@
+---
+title: easify-bluetooth
+description: Very simple setup for Bluetooth in Jetpack Compose
+---
+
+# easify-bluetooth
+
+The `easify-bluetooth` module provides tools for working with Bluetooth in Jetpack Compose. This module makes managing permissions, turning Bluetooth on/off, scanning devices, and establishing connections very simple.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-bluetooth:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Enable Bluetooth and Permissions (`rememberBluetoothLauncher`)
+To easily ask the user to turn on Bluetooth and handle the required permissions. The `rememberBluetoothLauncher` composable generates an instance bound to the context.
+
+```kotlin
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_bluetooth.rememberBluetoothLauncher
+
+@Composable
+fun BluetoothEnableScreen() {
+    var bluetoothState by remember { mutableStateOf("Not active") }
+
+    val bluetoothLauncher = rememberBluetoothLauncher(
+        onEnabled = { bluetoothState = "Bluetooth is successfully turned on" },
+        onDenied = { bluetoothState = "Bluetooth permission denied" }
+    )
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = "Status: $bluetoothState")
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = { bluetoothLauncher.launch() }) {
+            Text("Request Bluetooth Enable")
+        }
+    }
+}
+```
+
+### 2. Scan for Bluetooth Devices (`BluetoothScanner`)
+To scan for nearby Bluetooth devices, use the `BluetoothScanner` class.
+
+```kotlin
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_bluetooth.BluetoothScanner
+import ir.amirhesambandegan.easify_bluetooth.EasifyBluetoothDevice
+
+@Composable
+fun DeviceScannerScreen() {
+    val context = LocalContext.current
+    val scanner = remember { BluetoothScanner(context) }
+    var scannedDevices by remember { mutableStateOf(listOf<EasifyBluetoothDevice>()) }
+    var isScanning by remember { mutableStateOf(false) }
+
+    Column {
+        Button(onClick = {
+            isScanning = true
+            scanner.startScan { devices ->
+                scannedDevices = devices
+                isScanning = false
+            }
+        }) {
+            Text(if (isScanning) "Scanning..." else "Scan for Devices")
+        }
+
+        LazyColumn {
+            items(scannedDevices) { device ->
+                Text(text = "${device.name ?: "Unknown Device"} - ${device.address}")
+            }
+        }
+    }
+}
+```
+
+## API Reference
+
+### BluetoothAdvertiser
+```kotlin
+class BluetoothAdvertiser(context: Context) {
+    val isAdvertising: StateFlow<Boolean>
+    fun startAdvertising(serviceUuid: UUID, includeDeviceName: Boolean = true, onSuccess: () -> Unit = {}, onError: (errorCode: Int) -> Unit = {})
+    fun stopAdvertising()
+}
+```
+Manages BLE Advertising (Beacon). `startAdvertising` takes a UUID and optional parameters to start broadcasting. `stopAdvertising` stops the broadcast.
+
+### BluetoothConnectionManager
+```kotlin
+enum class ConnectionState { DISCONNECTED, CONNECTING, CONNECTED, DISCONNECTING }
+
+class BluetoothConnectionManager(private val context: Context) {
+    val connectionState: StateFlow<ConnectionState>
+    val discoveredServices: StateFlow<List<BluetoothGattService>>
+    fun connect(device: EasifyBluetoothDevice, autoConnect: Boolean = false)
+    fun disconnect()
+    fun writeCharacteristic(serviceUuid: UUID, characteristicUuid: UUID, data: ByteArray): Boolean
+}
+```
+Manages GATT connections. The properties `connectionState` and `discoveredServices` show the status and discovered services. `connect` takes a device to connect to and `disconnect` ends the connection. The `writeCharacteristic` method sends data to a specific service and returns a boolean.
+
+### BluetoothLauncher
+```kotlin
+class BluetoothLauncher(private val scanner: BluetoothScanner, private val observer: BluetoothObserver, private val onPermissionDenied: () -> Unit, private val coroutineScope: CoroutineScope) {
+    val scannedDevices: Flow<List<EasifyBluetoothDevice>>
+    val isEnabled: Flow<Boolean>
+    val isScanning: StateFlow<Boolean>
+    fun startScanning(serviceUuids: List<UUID>? = null, namePrefix: String? = null)
+    fun stopScanning()
+}
+
+@Composable
+fun rememberBluetoothLauncher(onPermissionDenied: () -> Unit = {}): BluetoothLauncher
+```
+Manages permissions and requests for turning on Bluetooth. `rememberBluetoothLauncher` creates an instance in Compose. `startScanning` takes optional UUIDs and prefixes to filter the scan.
+
+### BluetoothObserver
+```kotlin
+class BluetoothObserver(private val context: Context) {
+    val isBluetoothEnabled: Flow<Boolean>
+}
+```
+Observes the Bluetooth status dynamically. Provides the `isBluetoothEnabled` Flow which emits true or false based on the Bluetooth adapter state.
+
+### BluetoothScanner
+```kotlin
+class BluetoothScanner(context: Context) {
+    val scannedDevices: Flow<List<EasifyBluetoothDevice>>
+    fun startScan(serviceUuids: List<UUID>? = null, namePrefix: String? = null): Flow<Unit>
+    fun clearDevices()
+}
+```
+Scans for devices. `startScan` accepts optional filters (UUID or prefix) and returns a Flow of discovered devices. `clearDevices` clears the list.
+
+### BluetoothUtils
+```kotlin
+object BluetoothUtils {
+    fun getRequiredPermissions(): List<String>
+    fun Context.openBluetoothSettings()
+}
+```
+Utility functions. `getRequiredPermissions` returns a list of required Bluetooth permissions based on the Android version. `openBluetoothSettings` opens the system Bluetooth settings screen.
+
+### EasifyBluetoothDevice
+```kotlin
+data class EasifyBluetoothDevice(
+    val name: String?,
+    val address: String,
+    val rssi: Int,
+    val device: BluetoothDevice
+) {
+    fun getEstimatedDistance(txPower: Int = -59): Double
+    fun isBonded(): Boolean
+    fun pair(): Boolean
+    fun unpair(): Boolean
+}
+```
+A class representing a discovered device. `getEstimatedDistance` calculates the estimated distance using `txPower` and returns a Double. `pair` and `unpair` manage pairing operations and return a Boolean.

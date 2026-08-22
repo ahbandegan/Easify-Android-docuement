@@ -1,0 +1,167 @@
+---
+title: easify-validation
+description: Benutzerhandbuch für das Modul easify-validation
+---
+
+# easify-validation
+
+Dieses Modul bietet einen umfassenden Satz an regulären Ausdrücken (Regex) und Validierungstools, mit denen sich die Gültigkeit von Benutzereingaben (wie E-Mails, Passwörtern, Handynummern und iranischen nationalen Identifikationsnummern) ganz einfach überprüfen lässt.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-validation:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### Eingaben mit `ValidationRegexes` validieren
+
+Die Klasse `ValidationRegexes` enthält vorgefertigte Standardmuster zur Validierung verschiedener Datentypen, einschließlich länderspezifischer Datenformate für den Iran.
+
+**Beispiel: Registrierungsformular und Datenüberprüfung**
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_validation.ValidationRegexes
+
+@Composable
+fun ValidationExampleScreen() {
+    var email by remember { mutableStateOf("") }
+    var mobile by remember { mutableStateOf("") }
+    var nationalId by remember { mutableStateOf("") }
+    
+    var emailError by remember { mutableStateOf(false) }
+    var mobileError by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        
+        // E-Mail-Feld
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("E-Mail") },
+            isError = emailError
+        )
+        if (emailError) {
+            Text("Ungültiges E-Mail-Format", color = Color.Red, modifier = Modifier.padding(bottom = 8.dp))
+        }
+
+        // Handynummer-Feld (Iran)
+        OutlinedTextField(
+            value = mobile,
+            onValueChange = { mobile = it },
+            label = { Text("Handynummer (z. B. 09123456789)") },
+            isError = mobileError,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        if (mobileError) {
+            Text("Die Handynummer muss 11 Ziffern lang sein und mit 09 beginnen", color = Color.Red)
+        }
+
+        Button(
+            onClick = {
+                // E-Mail überprüfen
+                emailError = !ValidationRegexes.emailRegex.matches(email)
+                
+                // Handynummer überprüfen
+                mobileError = !ValidationRegexes.mobileRegex.matches(mobile)
+                
+                // Nationale ID überprüfen
+                val isNationalIdValid = ValidationRegexes.nationalIdRegex.matches(nationalId)
+                
+                if (!emailError && !mobileError) {
+                    println("Daten erfolgreich verifiziert!")
+                }
+            },
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text("Überprüfen und Senden")
+        }
+    }
+}
+```
+
+### Liste der verfügbaren Muster (Regex)
+
+Das Validierungsmodul unterstützt die folgenden Muster:
+- `emailRegex`: Standard-E-Mail-Adressenvalidierung.
+- `mobileRegex`: Iranische Handynummer (z. B. `0912...`).
+- `nationalIdRegex`: 10-stellige nationale ID (nur Strukturprüfung, keine Prüfsummenberechnung).
+- `passwordStrongRegex`: Starkes Passwort (mind. 8 Zeichen, enthält Groß-, Kleinbuchstaben, Zahlen und Sonderzeichen).
+- `postalCodeRegex`: 10-stellige Postleitzahl.
+- `landlineRegex`: Iranische Festnetznummer mit Vorwahl.
+- `urlRegex`: Standard-Internetadressen (URLs).
+- `usernameRegex`: Benutzername (3 bis 20 Zeichen, einschließlich englischer Buchstaben, Zahlen und Unterstriche).
+- `persianTextRegex`: Nur persische/arabische Buchstaben und Leerzeichen.
+- `englishTextRegex`: Nur englische Buchstaben und Leerzeichen.
+
+## API-Referenz
+
+### ValidationRegexes
+
+Ein umfassendes Objekt, das häufig verwendete reguläre Ausdrücke (Regex) für die Datenvalidierung auf Anwendungsebene enthält. Diese umfassen Validierungen für E-Mail, Passwörter, Kontaktnummern sowie für den Iran spezifische Formate.
+
+#### Eigenschaften (Properties)
+
+```kotlin
+val emailRegex: Regex
+```
+Wird zur Validierung von Standard-E-Mail-Adressen verwendet.
+
+```kotlin
+val mobileRegex: Regex
+```
+Wird zur Validierung iranischer Mobiltelefonnummern verwendet (muss mit 09 beginnen und genau 11 Ziffern umfassen).
+
+```kotlin
+val nationalIdRegex: Regex
+```
+Wird zur Validierung des iranischen Nationalcodes (National ID) verwendet (überprüft nur auf eine 10-stellige Struktur ohne Berechnung der Prüfsumme).
+
+```kotlin
+val passwordStrongRegex: Regex
+```
+Wird zur Validierung starker Passwörter verwendet (mindestens 8 Zeichen, darunter englische Klein- und Großbuchstaben, Zahlen und ein Sonderzeichen).
+
+```kotlin
+val postalCodeRegex: Regex
+```
+Wird zur Validierung iranischer Postleitzahlen verwendet (genau 10 Ziffern).
+
+```kotlin
+val landlineRegex: Regex
+```
+Wird zur Validierung iranischer Festnetznummern mitsamt der Vorwahl verwendet (beginnend mit 0 und insgesamt 11 Ziffern).
+
+```kotlin
+val urlRegex: Regex
+```
+Wird zur Validierung von Standard-Internetadressen (URLs) mit oder ohne Protokoll und www verwendet.
+
+```kotlin
+val usernameRegex: Regex
+```
+Wird zur Validierung von Benutzernamen verwendet (zwischen 3 und 20 Zeichen, bestehend aus Buchstaben, Zahlen und Unterstrichen).
+
+```kotlin
+val persianTextRegex: Regex
+```
+Wird verwendet, um sicherzustellen, dass der Text nur persische/arabische Buchstaben und Leerzeichen enthält.
+
+```kotlin
+val englishTextRegex: Regex
+```
+Wird verwendet, um sicherzustellen, dass der Text nur englische Buchstaben und Leerzeichen enthält.

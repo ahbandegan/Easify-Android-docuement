@@ -1,0 +1,202 @@
+---
+title: easify-fintech
+description: Benutzerhandbuch für das Modul easify-fintech
+---
+
+# easify-fintech
+
+Dieses Modul enthält Werkzeuge und Widgets im Zusammenhang mit Finanzen und Fintech. Dies umfasst die Anzeige von Kontoständen, die Validierung von Bankkarten, nationalen IDs, IBAN-Nummern sowie die Datumskonvertierung.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-fintech:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### 1. Kontostand mit Unschärfe-Effekt anzeigen (EasifyBalanceText)
+Ein fertiges Widget, um einen Betrag mit Währung anzuzeigen und diesen mit einem Unschärfeeffekt auszublenden.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import ir.amirhesambandegan.easify_fintech.EasifyBalanceText
+
+@Composable
+fun BalanceExample() {
+    EasifyBalanceText(
+        balance = 12500000L,
+        currency = "Toman",
+        initiallyHidden = false,
+        useBlurEffect = true
+    )
+}
+```
+
+
+## API-Referenz
+
+```kotlin
+fun String.isValidLegalId(): Boolean
+```
+Prüft, ob die angegebene Zeichenfolge eine gültige iranische ID für juristische Personen ist.
+- **Rückgabe:** `Boolean`, der angibt, ob die ID gültig ist.
+
+```kotlin
+fun String.isValidIranianPostalCode(): Boolean
+```
+Prüft, ob die angegebene Zeichenfolge eine gültige 10-stellige iranische Postleitzahl ist.
+- **Rückgabe:** `Boolean`, der die Gültigkeit angibt.
+
+```kotlin
+object BillValidator
+```
+Ein Werkzeug zur Validierung iranischer Strom-, Wasser- und Gasrechnungen.
+- **Wichtige Funktionen:**
+  - `fun isValidBill(billId: String, paymentId: String): Boolean`: Validiert sowohl die Rechnungs-ID als auch die Zahlungs-ID.
+
+```kotlin
+fun String.isValidCardNumber(): Boolean
+```
+Validiert eine 16-stellige Bankkartennummer mit dem Luhn-Algorithmus.
+- **Rückgabe:** `Boolean`, der angibt, ob die Kartennummer gültig ist.
+
+```kotlin
+fun String.formatCardNumber(): String
+```
+Formatiert einen reinen Ziffern-String in ein Kartenformat (Vierergruppen, getrennt durch Leerzeichen).
+- **Rückgabe:** `String` formatierte Kartennummer.
+
+```kotlin
+fun String.getBankName(): String?
+```
+Ruft den Namen der Bank basierend auf den ersten 6 Ziffern (BIN) der Kartennummer ab.
+- **Rückgabe:** `String?` der Name der Bank oder `null`, wenn er nicht erkannt wurde.
+
+```kotlin
+fun String.extractBankOtp(): String?
+```
+Extrahiert ein 5-, 6- oder 7-stelliges OTP (Einmalpasswort) aus persischen Bank-SMS.
+- **Rückgabe:** `String?` das extrahierte Einmalpasswort.
+
+```kotlin
+object ShebaHelper
+```
+Ein Hilfswerkzeug für die Arbeit mit iranischen IBAN (Sheba)-Nummern.
+- **Wichtige Funktionen:**
+  - `fun getBankNameFromSheba(sheba: String): String`: Ruft den Banknamen aus einem Sheba-String ab.
+
+```kotlin
+class CardNumberVisualTransformation : VisualTransformation
+```
+Eine visuelle Transformationsklasse, um ein Textfeld als Standard-Kartennummer zu formatieren (Hinzufügen eines Leerzeichens/Strichs nach jeweils 4 Ziffern).
+
+```kotlin
+class PriceVisualTransformation : VisualTransformation
+```
+Eine visuelle Transformationsklasse für Preisfelder, um Ziffern mit Kommas in Dreiergruppen zu unterteilen.
+
+```kotlin
+class ExpirationDateVisualTransformation : VisualTransformation
+```
+Eine visuelle Transformationsklasse zur Formatierung einer 4-stelligen Eingabe in ein Standard-Kartenablaufdatum (z. B. 12/03) durch Einfügen eines Schrägstrichs (/).
+
+```kotlin
+@Composable
+fun EasifyBalanceText(
+    balance: Long,
+    modifier: Modifier = Modifier,
+    currency: String = "Toman",
+    initiallyHidden: Boolean = false,
+    useBlurEffect: Boolean = true
+)
+```
+Ein Composable zur Anzeige eines Finanzsaldos zusammen mit dem Währungssymbol und einer Antippen-zum-Ausblenden-Funktion (Unschärfe oder Sterne).
+- **Parameter:** `balance`, `currency`, `initiallyHidden`, `useBlurEffect`.
+
+```kotlin
+fun Long.toPriceFormat(currency: String = "Toman"): String
+fun String.toPriceFormat(currency: String = "Toman"): String
+```
+Formatiert einen Betrag (Zahl oder String) mit Tausendertrennzeichen und hängt das Währungssymbol an.
+- **Rückgabe:** `String` formatierter Preis.
+
+```kotlin
+fun String.toEnglishNumbers(): String
+```
+Konvertiert alle persischen und arabischen Ziffern in einem String in englische Ziffern.
+- **Rückgabe:** `String` mit englischen Ziffern.
+
+```kotlin
+fun String.toPersianNumbers(): String
+```
+Konvertiert alle englischen Ziffern in einem String in persische Ziffern.
+- **Rückgabe:** `String` mit persischen Ziffern.
+
+```kotlin
+fun Long.rialToToman(): Long
+```
+Konvertiert Rial in Toman (teilt durch 10).
+- **Rückgabe:** `Long` Äquivalent in Toman.
+
+```kotlin
+fun Long.tomanToRial(): Long
+```
+Konvertiert Toman in Rial (multipliziert mit 10).
+- **Rückgabe:** `Long` Äquivalent in Rial.
+
+```kotlin
+fun Long.withTax(percent: Int = 9): Long
+```
+Fügt dem Betrag basierend auf dem angegebenen Prozentsatz Steuern hinzu (Standard ist 9%).
+- **Rückgabe:** `Long` Betrag inklusive Steuern.
+
+```kotlin
+fun Long.applyDiscount(percent: Int): Long
+```
+Wendet einen prozentualen Rabatt auf den Betrag an.
+- **Rückgabe:** `Long` Endbetrag nach Rabattabzug.
+
+```kotlin
+fun String.getMobileOperator(): String?
+```
+Erkennt den iranischen Mobilfunkanbieter (MCI, Irancell usw.) basierend auf der Vorwahl.
+- **Rückgabe:** `String?` Name des Anbieters.
+
+```kotlin
+fun String.isValidNationalId(): Boolean
+```
+Validiert eine iranische National-ID für natürliche Personen mithilfe des Standard-Prüfsummen-Algorithmus (Checksum).
+- **Rückgabe:** `Boolean`, der die Gültigkeit anzeigt.
+
+```kotlin
+fun Long.toPersianWords(): String
+fun String.toPersianWords(): String
+```
+Wandelt Zahlen in persische Wörter um (z. B. 123 in "صد و بیست و سه").
+- **Rückgabe:** `String` die Zahl in Worten.
+
+```kotlin
+class ShamsiDate(var year: Int, var month: Int, var day: Int)
+```
+Eine ressourcenschonende Klasse, die ein Jalali-Datum (Shamsi) darstellt.
+- **Eigenschaften:** `year`, `month`, `day`.
+
+```kotlin
+fun Long.toShamsiDate(): ShamsiDate
+```
+Konvertiert einen Unix-Zeitstempel (in Millisekunden) in ein Shamsi-Datum.
+- **Rückgabe:** `ShamsiDate`-Objekt, das das Datum darstellt.
+
+```kotlin
+fun String.isValidSheba(): Boolean
+```
+Validiert eine IBAN (Sheba) anhand des internationalen Standards ISO 7064 Mod 97-10.
+- **Rückgabe:** `Boolean`, der die Gültigkeit anzeigt.
+
+```kotlin
+fun String.getShebaBankName(): String?
+```
+Erkennt den Namen der Bank anhand des 3-stelligen Codes, der im iranischen Sheba-String enthalten ist.
+- **Rückgabe:** `String?` der Bankname oder `null`, wenn er nicht erkannt wurde.

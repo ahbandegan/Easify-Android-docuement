@@ -1,0 +1,171 @@
+---
+title: easify-notification
+description: Usage guide for the easify-notification module
+---
+
+# easify-notification
+
+This module is designed to simplify the process of creating and displaying various notifications in Android. It helps you easily send messages to your users without dealing with the complexities of `NotificationManager` and setting up notification channels.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-notification:2.1.0")
+```
+
+## Usage Guide
+
+### Displaying a Simple Notification
+
+The `NotificationHelper` class helps you easily send a notification. It automatically creates the necessary channels for Android 8 (API 26) and higher.
+
+**Example usage in Jetpack Compose:**
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_notification.NotificationHelper
+
+@Composable
+fun SimpleNotificationScreen() {
+    val context = LocalContext.current
+
+    Button(onClick = {
+        NotificationHelper.showNotification(
+            context = context,
+            channelId = "default_channel",
+            channelName = "General Channel",
+            title = "New Message!",
+            message = "You have an unread message.",
+            smallIcon = android.R.drawable.ic_dialog_info,
+            notificationId = 1001
+        )
+    }) {
+        Text("Show Notification")
+    }
+}
+```
+
+## API Reference
+
+### ActionButtonsNotification
+
+```kotlin
+data class NotificationAction(val iconRes: Int, val title: String, val pendingIntent: PendingIntent)
+```
+A data class for configuring notification action buttons, which includes an icon, title, and a `PendingIntent`.
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, title: String, message: String, iconRes: Int, actions: List<NotificationAction>)
+```
+Displays a notification with specified interactive buttons.
+
+### BigStyleNotification
+
+```kotlin
+fun showBigText(context: Context, channelId: String, notificationId: Int, title: String, shortMessage: String, longMessage: String, iconRes: Int)
+```
+Displays an expandable notification that reveals long text (BigText).
+
+```kotlin
+fun showBigPicture(context: Context, channelId: String, notificationId: Int, title: String, message: String, bitmap: Bitmap, iconRes: Int)
+```
+Displays a notification containing a large image (BigPicture).
+
+### ChannelManager
+
+```kotlin
+fun createGroup(context: Context, groupId: String, groupName: String)
+```
+Creates a notification channel group for better channel categorization in Android system settings.
+
+```kotlin
+fun createChannel(context: Context, channelId: String, channelName: String, importance: Int = NotificationManager.IMPORTANCE_DEFAULT, description: String? = null, groupId: String? = null, soundUri: Uri? = null, enableLights: Boolean = true, lightColor: Int = Color.BLUE, enableVibration: Boolean = true, vibrationPattern: LongArray = longArrayOf(0, 250, 250, 250))
+```
+Creates a notification channel with custom settings and features like importance, sound, notification light, and vibration pattern.
+
+### DirectReplyNotification
+
+```kotlin
+const val KEY_TEXT_REPLY = "key_text_reply"
+```
+The key used in the `Intent` to receive text entered by the user in a direct reply.
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, title: String, message: String, iconRes: Int, replyActionTitle: String = "Reply", intentClass: Class<*>)
+```
+Displays a notification that allows the user to directly type and send a text reply from within the notification itself.
+
+### GroupedNotification
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, groupId: String, title: String, message: String, iconRes: Int, isGroupSummary: Boolean = false, summaryText: String = "")
+```
+Displays categorized (grouped) notifications or a notification as a group summary.
+
+### InAppBanner
+
+```kotlin
+@Composable fun InAppBanner(isVisible: Boolean, title: String, message: String, onDismiss: () -> Unit)
+```
+A Jetpack Compose component to display an in-app banner that appears from the top and hides after a few seconds.
+
+### NotificationHelper
+
+```kotlin
+fun showNotification(context: Context, channelId: String, channelName: String, title: String, message: String, smallIcon: Int, notificationId: Int = 1001)
+```
+A simple tool for displaying text notifications and automatically creating their channel if needed.
+
+### NotificationPermission
+
+```kotlin
+@Composable fun rememberNotificationPermission(): NotificationPermissionState
+```
+Retrieves, controls, and manages the state of the notification display permission on Android 13 and higher using Jetpack Compose.
+
+```kotlin
+class NotificationPermissionState(val isGranted: Boolean, val requestPermission: () -> Unit, val openSettings: () -> Unit)
+```
+A class for holding the current permission state, a function to request permission, and a function to direct the user to the app's notification settings page.
+
+### ProgressNotification
+
+```kotlin
+class ProgressNotification(context: Context, channelId: String, notificationId: Int, title: String, iconRes: Int)
+```
+Creates a notification containing a progress bar.
+
+```kotlin
+fun updateProgress(progress: Int, max: Int = 100, message: String = "$progress%")
+```
+Updates the progress bar percentage along with custom text.
+
+```kotlin
+fun setIndeterminate(message: String = "Processing...")
+```
+Changes the progress bar to indeterminate mode when the operation's completion time is unknown.
+
+```kotlin
+fun finish(successMessage: String = "Complete")
+```
+Removes the progress bar and displays an operation completion and success message.
+
+```kotlin
+fun cancel()
+```
+Cancels and removes the running notification.
+
+### ScheduledNotification
+
+```kotlin
+inline fun <reified W : CoroutineWorker> schedule(context: Context, delayMillis: Long, inputData: Data = workDataOf()): UUID
+```
+Schedules a background process (Worker) to display a notification with a specified delay.
+
+```kotlin
+fun cancel(context: Context, workId: UUID)
+```
+Cancels a scheduled notification using its process ID.

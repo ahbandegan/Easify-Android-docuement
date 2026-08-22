@@ -1,0 +1,224 @@
+---
+title: easify-location
+description: Benutzerhandbuch für das Modul easify-location
+---
+
+# easify-location
+
+Dieses Modul ist eine Komplettlösung für die Arbeit mit Standorten. Hochpräzise Standortverfolgung, Entfernungs- und Geschwindigkeitsberechnung, Geofencing, die Konvertierung von Koordinaten in Adressen (SmartGeocoder) und sogar die Verhinderung gefälschter Koordinaten (AntiFakeGps) sind alle in diesem Paket enthalten.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-location:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### 1. Kontinuierliche Standortverfolgung (LocationTracker)
+
+Eine der grundlegendsten Anforderungen ist das kontinuierliche Abrufen des Breiten- und Längengrads des Benutzers bei gleichzeitig optimalem Batterieverbrauch. Dieses Modul macht dies sehr einfach.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_location.LocationTracker
+
+@Composable
+fun MapScreen() {
+    val context = LocalContext.current
+    val locationTracker = remember { LocationTracker(context) }
+    
+    // Standort als Flow abrufen und im State speichern
+    val currentLocation by locationTracker.locationFlow.collectAsState(initial = null)
+
+    LaunchedEffect(Unit) {
+        // Standortverfolgung starten
+        locationTracker.startTracking()
+    }
+
+    if (currentLocation != null) {
+        Text("Breitengrad: ${currentLocation?.latitude}")
+        Text("Längengrad: ${currentLocation?.longitude}")
+    } else {
+        Text("Standort wird ermittelt...")
+    }
+}
+```
+
+### 2. Filter für Standortsprünge (AntiJumpFilter) und gefälschte Standorte (AntiFakeGps)
+
+Für Flottenmanagement- oder Fahrdienst-Apps müssen Sie unlogische Standorte herausfiltern, die durch GPS-Fehler verursacht werden.
+
+```kotlin
+import ir.amirhesambandegan.easify_location.AntiJumpFilter
+import ir.amirhesambandegan.easify_location.AntiFakeGps
+
+fun processLocation(location: Location) {
+    // Überprüfen Sie, ob der Benutzer eine Fake-GPS-Software verwendet
+    if (AntiFakeGps.isFakeLocation(location)) {
+        showError("Bitte schalten Sie Fake GPS aus")
+        return
+    }
+
+    // Plötzliche GPS-Sprünge filtern
+    val validLocation = AntiJumpFilter.filter(location)
+    if (validLocation != null) {
+        updateMapLocation(validLocation)
+    }
+}
+```
+
+### 3. Koordinaten in Adresse umwandeln mit SmartGeocoder
+
+Dieses Tool wird verwendet, wenn Sie Breiten- und Längengrad in eine Textadresse (Straße, Stadt usw.) umwandeln möchten.
+
+```kotlin
+import ir.amirhesambandegan.easify_location.SmartGeocoder
+import kotlinx.coroutines.launch
+
+// Innerhalb eines CoroutineScope
+coroutineScope.launch {
+    val geocoder = SmartGeocoder(context)
+    val address = geocoder.getAddressFromLocation(lat = 35.6892, lng = 51.3890)
+    
+    println("Der Benutzer befindet sich hier: ${address?.fullAddress}")
+}
+```
+
+## API-Referenz
+
+### Klasse `AntiFakeGps`
+```kotlin
+fun Location.isMocked(): Boolean
+```
+Überprüft, ob der aktuelle Standort durch eine Standort-Mocking-Software (Fake GPS) erstellt wurde. Unterstützt alle Android-Versionen.
+* **Parameter:** `Location` Empfängerobjekt (Receiver)
+* **Rückgabe:** Ein boolescher Wert, der `true` ist, wenn der Standort vorgetäuscht (mocked) ist.
+
+### Funktionen in `AntiJumpFilter`
+```kotlin
+fun Flow<Location?>.filterJumps(maxSpeedKmh: Float = 200f): Flow<Location?>
+```
+Wird verwendet, um unlogische Standorte herauszufiltern, die auf plötzliche Sprünge oder unmögliche Geschwindigkeiten hinweisen.
+* **Parameter:** `maxSpeedKmh`: Maximal zulässige Geschwindigkeit in km/h (Standard 200f).
+* **Rückgabe:** Ein neuer `Flow`, bei dem ungültige Standorte herausgefiltert wurden.
+
+### Funktionen in `CoordinateFormatter`
+```kotlin
+fun Location.toGoogleMapsLink(): String
+```
+Generiert einen teilbaren Link zur Suche der Koordinaten auf Google Maps.
+* **Rückgabe:** String, der den Google Maps-Suchlink enthält.
+
+```kotlin
+fun Location.toDMSFormat(): String
+```
+Konvertiert Dezimalkoordinaten in das Format Grad, Minuten und Sekunden (DMS) zusammen mit Himmelsrichtungen. (z. B. `35° 43' 12" N, 51° 24' 36" E`)
+* **Rückgabe:** Formatierter String der geografischen Angaben.
+
+### Funktionen in `GeofencingEngine`
+```kotlin
+@Composable
+fun rememberGeofenceState(
+    currentLocation: Location?,
+    centerLat: Double,
+    centerLng: Double,
+    radiusMeters: Float
+): State<Boolean>
+```
+Überprüft reaktiv, ob sich der aktuelle Standort innerhalb eines geografischen Zauns (Geofence, ein Kreis mit einem bestimmten Zentrum und Radius) befindet.
+* **Parameter:**
+  * `currentLocation`: Der Live-Standort des Benutzers
+  * `centerLat` und `centerLng`: Breitengrad und Längengrad des Zaunzentrums
+  * `radiusMeters`: Radius des Kreises in Metern
+* **Rückgabe:** Ein `State`, der `true` enthält, wenn man sich im Bereich befindet, andernfalls `false`.
+
+### Klasse und Funktionen `GpsEnabler`
+```kotlin
+class GpsEnabler(
+    private val context: Context,
+    private val launchResolution: (IntentSenderRequest) -> Unit
+) {
+    fun requestGps(onResult: (Boolean) -> Unit = {})
+}
+```
+Ein Tool, um zu überprüfen, ob das GPS des Geräts eingeschaltet ist. Wenn es ausgeschaltet ist, verwendet es die Google Play-Dienste, um einen Dialog anzuzeigen, der den Benutzer auffordert, es einzuschalten.
+* **Parameter:** Callback `onResult`, der den Erfolg oder Misserfolg der GPS-Aktivierung zurückgibt.
+
+```kotlin
+@Composable
+fun rememberGpsEnabler(onResult: (Boolean) -> Unit): GpsEnabler
+```
+Eine Composable-Funktion, um eine Instanz der `GpsEnabler`-Klasse in Jetpack Compose zu erstellen und vorzuhalten.
+
+### Klasse `LocationMath`
+```kotlin
+object LocationMath {
+    fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Float
+}
+```
+Ein Modul, das mathematische Berechnungstools im Zusammenhang mit geografischen Standorten enthält.
+* **Funktion `calculateDistance`:** Berechnet die Entfernung zwischen zwei geografischen Punkten mithilfe der speziellen Haversine-Formel.
+* **Parameter:** Breitengrad und Längengrad der Start- und Zielpunkte.
+* **Rückgabe:** Genaue Entfernung zwischen den beiden Punkten in Metern.
+
+### Klasse und Funktionen `LocationTracker`
+```kotlin
+class LocationTracker(context: Context) {
+    fun getLocationUpdates(interval: Long = 10000L): Flow<Location?>
+}
+```
+Ein reaktives Tool, das auf dem Standortdienst von Google (FusedLocationProviderClient) basiert, um kontinuierlich und in regelmäßigen Abständen den Standort des Benutzers abzurufen.
+* **Parameter:** `interval` (Aktualisierungsintervall in Millisekunden).
+* **Rückgabe:** Ein `Flow`, der die Standorte des Benutzers ausgibt (emittiert).
+
+```kotlin
+class LocationLauncherState(
+    val tracker: LocationTracker,
+    var permissionRequested: Boolean
+)
+```
+Eine Klasse, die den Status der Standortberechtigungsanfrage und die Instanz des Standort-Trackers enthält.
+
+```kotlin
+@Composable
+fun rememberLocationTracker(): LocationLauncherState
+```
+Verwaltet den Location-Tracker und den Lebenszyklus von Standortberechtigungsanfragen in Jetpack Compose und initiiert den Anfrageprozess, wenn Berechtigungen fehlen.
+
+### Funktionen in `SmartGeocoder`
+```kotlin
+suspend fun Location.toAddress(context: Context, locale: Locale = Locale.getDefault()): Address?
+```
+Konvertiert einen geografischen Standort (Breitengrad und Längengrad) asynchron in eine Textadresse.
+* **Parameter:** App-Kontext und `Locale`.
+* **Rückgabe:** Ein `Address`-Objekt oder `null`, wenn nicht erfolgreich.
+
+```kotlin
+fun Address.toFormattedString(): String
+```
+Formatiert alle Teile einer gefundenen Adresse zu einem einzigen kontinuierlichen, durch Kommas getrennten String.
+
+```kotlin
+suspend fun Geocoder.getCoordinates(addressName: String): Location?
+```
+Findet den Standort (Breiten- und Längengrad) für eine bestimmte Textadresse unter Verwendung von `Geocoder`.
+
+### Funktionen in `SpeedAndETA`
+```kotlin
+fun Location.getSpeedKmh(): Float
+```
+Berechnet die Bewegungsgeschwindigkeit des Benutzers in Kilometern pro Stunde.
+* **Rückgabe:** Geschwindigkeit als Float. Gibt `0f` zurück, wenn keine Geschwindigkeitsinformationen verfügbar sind.
+
+```kotlin
+fun Location.calculateETA(destinationLat: Double, destinationLng: Double): Int?
+```
+Schätzt die voraussichtliche Ankunftszeit (ETA) des Benutzers an einem bestimmten Ziel anhand der aktuellen Geschwindigkeit und der Berechnung der Luftlinienentfernung.
+* **Parameter:** Breitengrad und Längengrad des Zielpunktes.
+* **Rückgabe:** Geschätzte verbleibende Zeit in Minuten. Gibt `null` zurück, wenn die Bewegungsgeschwindigkeit sehr niedrig ist (weniger als 5 km/h).

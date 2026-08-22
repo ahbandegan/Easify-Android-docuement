@@ -1,0 +1,222 @@
+---
+title: easify-ui
+description: Benutzerhandbuch für das Modul easify-ui
+---
+
+# easify-ui
+
+Dieses Modul ist eine Sammlung moderner und flexibler UI-Komponenten (User Interface) für Jetpack Compose, die Ihnen dabei hilft, in kürzester Zeit attraktive und funktionale Benutzeroberflächen zu erstellen.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-ui:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### Verwendung von `EasifyOtpInput` für Bestätigungscodes
+
+Eine häufige App-Anforderung ist der Empfang eines OTP-Bestätigungscodes. `EasifyOtpInput` ist eine sofort einsatzbereite, schöne Komponente für diesen Zweck, die auch Fehleranimationen (Shake) unterstützt.
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_ui.EasifyOtpInput
+
+@Composable
+fun OtpScreen() {
+    var otpValue by remember { mutableStateOf("") }
+    var hasError by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text("Bitte geben Sie den 4-stelligen Bestätigungscode ein:")
+        
+        EasifyOtpInput(
+            value = otpValue,
+            onValueChange = { newValue ->
+                otpValue = newValue
+                hasError = false // Fehler beim erneuten Tippen löschen
+            },
+            length = 4,
+            isError = hasError,
+            activeColor = Color.Blue,
+            inactiveColor = Color.LightGray,
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            onComplete = { completedOtp ->
+                // Überprüfen Sie, ob der eingegebene Code korrekt ist
+                if (completedOtp != "1234") {
+                    hasError = true
+                }
+            }
+        )
+        
+        if (hasError) {
+            Text(
+                text = "Der eingegebene Code ist falsch!",
+                color = Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+    }
+}
+```
+
+### Verwendung von `EasifySegmentedControl`
+
+Diese Komponente eignet sich perfekt zur Erstellung eines eleganten und animierten tab-ähnlichen Menüs (ähnlich wie das iOS Segmented Control).
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_ui.EasifySegmentedControl
+
+@Composable
+fun SegmentedControlExample() {
+    val tabs = listOf("Täglich", "Wöchentlich", "Monatlich")
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        EasifySegmentedControl(
+            items = tabs,
+            selectedIndex = selectedTabIndex,
+            onItemSelected = { index ->
+                selectedTabIndex = index
+            }
+        )
+
+        Text(
+            text = "Ausgewählte Option: ${tabs[selectedTabIndex]}",
+            modifier = Modifier.padding(top = 24.dp)
+        )
+    }
+}
+```
+
+## API-Referenz
+
+### EasifyDesignModifiers
+
+```kotlin
+fun Modifier.dashedBorder(color: Color = Color.Gray, strokeWidth: Dp = 2.dp, dashLength: Dp = 8.dp, gapLength: Dp = 4.dp, cornerRadius: Dp = 0.dp): Modifier
+```
+Fügt einen gestrichelten Rand um die Komponente hinzu.
+
+```kotlin
+fun Modifier.pulse(minScale: Float = 0.95f, maxScale: Float = 1.05f, minAlpha: Float = 0.5f, durationMillis: Int = 1000): Modifier
+```
+Fügt der Komponente eine Pulsanimation (abwechselnde Größe und Deckkraft) hinzu.
+
+```kotlin
+fun Modifier.glass(blurRadius: Dp = 16.dp, backgroundColor: Color = Color.White.copy(alpha = 0.2f), shape: Shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)): Modifier
+```
+Wendet einen Glassmorphism-Effekt auf die Komponente an (Erfordert Android 12+).
+
+```kotlin
+fun Modifier.fadingEdges(topEdgeHeight: Dp = 16.dp, bottomEdgeHeight: Dp = 16.dp): Modifier
+```
+Erzeugt verblassende Ränder (fading edges) am oberen und unteren Rand eines scrollbaren Bereichs.
+
+### EasifyDraggable
+
+```kotlin
+@Composable fun EasifyFloatingDraggable(modifier: Modifier = Modifier, initialPosition: Offset = Offset.Zero, content: @Composable () -> Unit)
+```
+Erstellt eine schwebende und ziehbare (draggable) Box auf dem Bildschirm.
+
+```kotlin
+@OptIn(ExperimentalFoundationApi::class) @Composable fun <T : Any> EasifyReorderableList(...)
+```
+Erstellt eine Liste von Elementen, die per Drag-and-Drop neu angeordnet (reordered) werden können.
+
+### EasifyExpandableText
+
+```kotlin
+@Composable fun EasifyExpandableText(text: String, ...)
+```
+Zeigt Text an, der durch Klicken auf eine Schaltfläche erweitert oder eingeklappt werden kann, um zusätzliche Zeilen ein- oder auszublenden.
+
+### EasifyModifiers
+
+```kotlin
+fun Modifier.bounceClick(minScale: Float = 0.95f, onClick: () -> Unit): Modifier
+```
+Erzeugt einen Bounce-Effekt (Schrumpfen), wenn auf die Komponente geklickt wird (ähnlich wie bei iOS-Schaltflächen).
+
+```kotlin
+fun Modifier.hideKeyboardOnTapOutside(): Modifier
+```
+Verbirgt die Tastatur, wenn der Benutzer auf einen Bereich außerhalb eines Textfelds klickt (Tap Outside).
+
+```kotlin
+fun Modifier.shimmer(showShimmer: Boolean = true, targetColor: Color = Color.White.copy(alpha = 0.3f)): Modifier
+```
+Fügt dem Hintergrund der Komponente einen Shimmer-Animationseffekt hinzu, der normalerweise für Ladezustände verwendet wird.
+
+```kotlin
+fun Modifier.shake(isError: Boolean): Modifier
+```
+Erzeugt ein horizontales Schütteln (Shake) auf der Komponente, um einen Fehlerzustand anzuzeigen.
+
+### EasifyOtpInput
+
+```kotlin
+@Composable fun EasifyOtpInput(value: String, onValueChange: (String) -> Unit, ...)
+```
+Ein Einmalpasswort-Eingabefeld (OTP) mit separaten Feldern für jedes Zeichen.
+
+### EasifySegmentedControl
+
+```kotlin
+@Composable fun EasifySegmentedControl(items: List<String>, selectedIndex: Int, onItemSelected: (Int) -> Unit, ...)
+```
+Eine Segmentsteuerung zur Auswahl einer Option aus verfügbaren Auswahlmöglichkeiten mit einer Übergangsanimation.
+
+### EasifySwipeToAction
+
+```kotlin
+@Composable fun EasifySwipeToAction(modifier: Modifier = Modifier, ...)
+```
+Schafft die Möglichkeit, Elemente horizontal zu wischen (Swipe), um Aktionen wie "Löschen" oder "Als gelesen markieren" auszuführen.
+
+### ModifierUtils
+
+```kotlin
+fun Modifier.rtlMirror(): Modifier
+```
+Spiegelt ein Element horizontal, wenn die Layoutrichtung von Rechts nach Links (RTL) ist. Geeignet für Symbole wie einen Zurück-Pfeil.
+
+### Spacer
+
+```kotlin
+@Composable fun SpacerWidth(width: Dp)
+@Composable fun SpacerWidth(fraction: Float = 1f)
+@Composable fun SpacerHeight(height: Dp)
+@Composable fun SpacerHeight(fraction: Float = 1f)
+```
+Funktionen zum einfachen Erstellen horizontaler und vertikaler Abstände (Spacers) mit genauen Größen oder als Bruchteile des verfügbaren Platzes.
+
+### SuspendButton
+
+```kotlin
+@Composable fun SuspendButton(onClick: suspend CoroutineScope.() -> Unit, ...)
+```
+Eine anpassbare Schaltfläche mit Unterstützung für Kotlin-Coroutinen und die Anzeige von Ladezuständen. Sie verhindert automatisch aufeinanderfolgende Klicks.

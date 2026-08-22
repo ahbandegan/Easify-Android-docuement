@@ -1,0 +1,63 @@
+---
+title: Introduction & Quick Start
+description: EasifyAndroid Documentation
+---
+
+# EasifyAndroid
+
+Welcome to the official documentation for **EasifyAndroid**!
+
+EasifyAndroid is a comprehensive set of libraries, tools, and extensions designed to simplify Android development (with an emphasis on Kotlin and Jetpack Compose) to the maximum extent. It brings **clean architecture**, **speed of development**, and **standardization of repeated implementations** to your Android projects.
+
+Since version `2.0.0`, EasifyAndroid has become **modular**! You no longer need to add the entire library to your project; you can now easily include only the specific modules you need.
+
+---
+
+## Installation & Setup
+
+This library is available on [JitPack](https://jitpack.io). To use it, you must first add the JitPack repository to your project.
+
+### 1. Adding the JitPack Repository
+In your `settings.gradle.kts` (or project-level `build.gradle`):
+
+```kotlin
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+}
+```
+
+### 2. Adding Modules
+Go to your module's `build.gradle.kts` (usually in the `app` module) and add the desired modules to your dependencies.
+For example, to add the base module (containing essential extensions) and the biometric module:
+
+```kotlin
+dependencies {
+    implementation("com.github.ahbandegan.Easify-Android:easify-android:2.1.0")
+
+    implementation("com.github.ahbandegan.Easify-Android:easify-biometric:2.1.0")
+    implementation("com.github.ahbandegan.Easify-Android:easify-permission:2.1.0")
+}
+```
+
+---
+
+## List of Available Modules
+
+You can view the documentation and usage guide for each module via the sidebar menu.
+
+Some of the most important modules in this project include:
+- **`easify-biometric`**: Fingerprint authentication and facial recognition with just one line of code!
+- **`easify-permission`**: Super powerful handling of Android permissions in Compose.
+- **`easify-network`**: Check network connection status and ping.
+- **`easify-security`**: Secure data encryption using Android Keystore.
+- **`easify-persian`**: Date conversion to Jalali calendar, formatting numbers, and Persian keyboard utilities.
+- **`easify-fintech`**: Useful tools for financial apps, card formatting, Sheba, and Rial formatting.
+
+---
+
+> 💡 **Note:** The source code of this project is completely open-source and available on [GitHub](https://github.com/ahbandegan/Easify-Android). Feel free to contribute to its development!

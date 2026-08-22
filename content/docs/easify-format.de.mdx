@@ -1,0 +1,131 @@
+---
+title: easify-format
+description: Dienstprogramme zur Formatierung von Text und Zahlen
+---
+
+# easify-format
+
+Das Modul `easify-format` bietet eine Reihe von äußerst praktischen Hilfsfunktionen zum Formatieren von Text, Zahlen, Zeiten und Zeichenfolgen in Android-Anwendungen.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-format:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### Währungsformatierung (Currency Formatting)
+Sie können Zahlen einfach in Standardwährungsformate konvertieren.
+
+```kotlin
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_format.toCurrency
+
+@Composable
+fun FormatExample() {
+    val price = 1500000.75
+    // Gibt einen String basierend auf dem Standard-Locale zurück, z.B. $1,500,000.75
+    val formattedPrice = price.toCurrency()
+
+    Text(text = "Preis: $formattedPrice")
+}
+```
+
+## API-Referenz
+
+```kotlin
+fun String.highlightMatch(query: String, highlightColor: Color = Color.Yellow, fontWeight: FontWeight = FontWeight.Bold): AnnotatedString
+```
+Hebt einen bestimmten Suchbegriff (`query`) innerhalb eines Strings hervor und gibt einen `AnnotatedString` zurück (nützlich in Jetpack Compose).
+- **Parameter:** `query` der Suchbegriff, `highlightColor` die Hervorhebungsfarbe, `fontWeight` die Schriftstärke.
+
+```kotlin
+fun String.toLinkifiedAnnotatedString(linkColor: Color = Color.Blue): AnnotatedString
+```
+Konvertiert einen String in einen `AnnotatedString`, bei dem URLs und Erwähnungen (beginnend mit @) zu klickbaren Links werden.
+- **Parameter:** `linkColor` die Farbe der Links.
+
+```kotlin
+fun Long.toCompactFormat(): String
+```
+Formatiert eine große Zahl in eine kompakte String-Darstellung (z. B. 1.2K oder 3.5M).
+- **Rückgabe:** Ein kompakter String der Zahl.
+
+```kotlin
+fun Int.toOrdinal(language: String = "en"): String
+```
+Wandelt eine Ganzzahl in ein ordinales String-Format um, wie "1st, 2nd, 3rd" auf Englisch oder entsprechend im Persischen.
+- **Parameter:** `language` der Sprachcode (Standard ist "en" oder "fa").
+
+```kotlin
+fun String.toTitleCase(): String
+```
+Konvertiert einen String in Title Case, wobei der erste Buchstabe jedes Wortes großgeschrieben wird.
+
+```kotlin
+fun String.toCamelCase(): String
+```
+Konvertiert einen String in camelCase (entfernt Leerzeichen und schreibt den ersten Buchstaben der folgenden Wörter groß).
+
+```kotlin
+fun String.toSnakeCase(): String
+```
+Konvertiert einen String in snake_case (ersetzt Leerzeichen durch Unterstriche).
+
+```kotlin
+fun String.toSlug(): String
+```
+Konvertiert einen String in einen URL-freundlichen Slug, wobei ungültige Zeichen und Leerzeichen durch Bindestriche (-) ersetzt werden.
+
+```kotlin
+fun String.stripHtmlTags(): String
+```
+Entfernt alle HTML-Tags aus einem String und gibt Klartext (Plain Text) zurück.
+
+```kotlin
+fun String.toInitials(): String
+```
+Extrahiert die Initialen eines Strings. Bei einzelnen Wörtern wird der erste Buchstabe zurückgegeben, bei mehreren Wörtern die ersten Buchstaben des ersten und letzten Wortes.
+
+```kotlin
+fun String.maskEmail(): String
+```
+Maskiert eine E-Mail-Adresse aus Datenschutzgründen und ersetzt die mittleren Zeichen durch Sternchen (z. B. joh***@example.com).
+
+```kotlin
+fun String.maskPhone(): String
+```
+Maskiert eine Telefonnummer, zeigt nur die ersten 4 und letzten 4 Ziffern an und ersetzt die mittleren durch Sternchen.
+
+```kotlin
+fun String.maskCard(): String
+```
+Maskiert eine 16-stellige Kartennummer, wobei nur die ersten 4 und letzten 4 Ziffern angezeigt werden.
+
+```kotlin
+fun String.similarityPercentage(other: String): Double
+```
+Berechnet den Ähnlichkeitsprozentsatz zwischen zwei Strings mithilfe des Levenshtein-Distanz-Algorithmus.
+- **Rückgabe:** Ein Wert zwischen 0.0 und 100.0 als Prozentsatz.
+
+```kotlin
+fun Long.toTimeAgo(): String
+```
+Konvertiert einen Zeitstempel (in Millisekunden) in ein für Menschen lesbares "vor x Zeit"-Stringformat (z. B. "gerade eben", "gestern", "vor 2 Tagen").
+
+```kotlin
+fun Long.toTimerFormat(): String
+```
+Konvertiert eine Dauer (in Sekunden) in ein Standard-Timerformat (MM:SS oder HH:MM:SS).
+
+```kotlin
+fun Number.toCurrency(locale: Locale = Locale.getDefault()): String
+```
+Formatiert eine Zahl als Währungsstring basierend auf dem angegebenen Locale.
+
+```kotlin
+fun Long.toTimeString(): String
+```
+Konvertiert eine Dauer (in Millisekunden) in ein String-Zeitformat (mm:ss oder HH:mm:ss).

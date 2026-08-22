@@ -1,0 +1,189 @@
+---
+title: easify-image
+description: Usage guide for the easify-image module
+---
+
+# easify-image
+
+This module provides a powerful set of tools for processing, compressing, applying effects, zooming in on images, extracting EXIF data, adding watermarks, and extracting color palettes in Android applications using Jetpack Compose.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-image:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Zoomable Image (EasifyZoomableImage)
+
+One of the most common needs in apps is displaying an image that the user can zoom into (Pinch-to-Zoom) and pan around.
+
+```kotlin
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import ir.amirhesambandegan.easify_image.EasifyZoomableImage
+
+@Composable
+fun ZoomableImageExample() {
+    val myImagePainter: Painter = painterResource(id = R.drawable.my_sample_image)
+
+    // An interactive image that the user can zoom and pan with two fingers
+    EasifyZoomableImage(
+        painter = myImagePainter,
+        modifier = Modifier.fillMaxSize(),
+        contentDescription = "Zoomable Image"
+    )
+}
+```
+
+### 2. Image Compression (ImageCompressor)
+
+To upload images without consuming excessive data, you can use the compressor tool.
+
+```kotlin
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_image.ImageCompressor
+import kotlinx.coroutines.launch
+
+@Composable
+fun ImageCompressorExample(imageUri: Uri) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    Button(
+        onClick = {
+            coroutineScope.launch {
+                // Compress the image to a target size (e.g., under 1 MB)
+                val compressedFile = ImageCompressor.compressImage(
+                    context = context,
+                    uri = imageUri,
+                    maxWidth = 1024,
+                    maxHeight = 1024,
+                    quality = 80
+                )
+                // Now you can upload the compressedFile
+            }
+        }
+    ) {
+        Text("Compress and Upload Image")
+    }
+}
+```
+
+### 3. Extracting Colors (ImagePalette) and Watermarking (ImageWatermark)
+
+You can also use the functions in this module to extract the dominant color palette of an image for UI synchronization, or to add watermarks to images.
+
+```kotlin
+import ir.amirhesambandegan.easify_image.ImagePalette
+import ir.amirhesambandegan.easify_image.ImageWatermark
+
+// Inside your app logic:
+val dominantColor = ImagePalette.extractDominantColor(myBitmap)
+val watermarkedBitmap = ImageWatermark.addTextWatermark(myBitmap, "Copyright 2026")
+```
+
+
+## API Reference
+
+```kotlin
+class CaptureController
+```
+A controller for capturing and saving the content of a Composable as a `Bitmap`.
+- **Functions:** `fun capture(): Bitmap?` (Creates and returns a Bitmap).
+
+```kotlin
+@Composable
+fun rememberCaptureController(): CaptureController
+```
+A Composable function to create and remember a `CaptureController` instance for use in compositions.
+
+```kotlin
+@Composable
+fun Capturable(controller: CaptureController, modifier: Modifier = Modifier, content: @Composable () -> Unit)
+```
+A Composable container that allows you to extract its internal content as a Bitmap (using `CaptureController`).
+
+```kotlin
+@Composable
+fun EasifyZoomableImage(imageBitmap: ImageBitmap, modifier: Modifier = Modifier)
+```
+A Composable widget for displaying an image that the user can Zoom and Pan using touch gestures.
+
+```kotlin
+fun Bitmap.compressToTargetSize(maxSizeKB: Int): ByteArray
+```
+Compresses a `Bitmap` so that the final file size is less than or equal to `maxSizeKB`, returning the result as a byte array.
+
+```kotlin
+fun Bitmap.compressToTargetBitmap(maxSizeKB: Int): Bitmap
+```
+Works the same as the above function, but ultimately returns a compressed and optimized `Bitmap`.
+
+```kotlin
+fun Bitmap.toGrayscale(): Bitmap
+```
+Applies a black-and-white (Grayscale) effect to an image.
+
+```kotlin
+fun Bitmap.cropCircle(): Bitmap
+```
+Crops the image into a circle (based on the shorter side).
+
+```kotlin
+fun Bitmap.fastBlur(): Bitmap
+```
+Creates a Blur effect using a fast Downscale/Upscale method.
+
+```kotlin
+fun Uri.toCorrectedBitmap(context: Context): Bitmap?
+```
+Reads an image from a `Uri` and automatically corrects its rotation using its EXIF data.
+
+```kotlin
+fun Bitmap.extractDominantColor(): Color
+```
+Extracts the dominant color of the image by drastically reducing its size (for higher performance).
+
+```kotlin
+fun Bitmap.extractAverageColor(): Color
+```
+Extracts the average color by reducing the image size to a 5x5 grid and averaging the pixel values.
+
+```kotlin
+object ImageUtils
+```
+### Practical tools for working with images.
+**Functions available in this object:**
+- Safely converts a Uri to a Bitmap.
+```kotlin
+fun Uri.toBitmap(context: Context): Bitmap?
+```
+- Converts an image to a byte array with specified quality.
+```kotlin
+fun Bitmap.compressToBytes(quality: Int = 80, format: CompressFormat = JPEG): ByteArray
+```
+
+- Converts an image to a Base64 encoded string.
+```kotlin
+fun Bitmap.toBase64(quality: Int = 80, format: CompressFormat = JPEG): String
+```
+
+- Resizes the image while maintaining its Aspect Ratio.
+```kotlin
+fun Bitmap.resize(maxWidth: Int, maxHeight: Int): Bitmap
+```
+
+- Adds a watermark to the image.
+```kotlin
+fun Bitmap.addWatermark(text: String, alpha: Int = 128, textSize: Float = 50f): Bitmap
+```
+Adds a text watermark with a specified opacity and size to the bottom-right corner of the image.

@@ -1,0 +1,214 @@
+---
+title: easify-lifecycle
+description: Usage guide for the easify-lifecycle module
+---
+
+# easify-lifecycle
+
+Managing the Lifecycle in Compose can sometimes be complex. This module provides various effects and observers for simple and clean control over the lifecycle of components and the Activity (e.g., executing code on Resume, Pause, etc.).
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-lifecycle:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Using Lifecycle Effects
+
+Instead of dealing with `DisposableEffect` and `LifecycleEventObserver`, you can simply use ready-made functions like `OnResumeEffect`, `OnPauseEffect`, `OnCreateEffect`, and so on.
+
+```kotlin
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_lifecycle.OnResumeEffect
+import ir.amirhesambandegan.easify_lifecycle.OnPauseEffect
+
+@Composable
+fun VideoPlayerScreen() {
+    
+    // Code inside this block only runs when the screen enters the Resume state
+    OnResumeEffect {
+        // Start playing the video or refresh data
+        playVideo()
+    }
+
+    // Code inside this block only runs when the screen is Paused
+    OnPauseEffect {
+        // Pause the video
+        pauseVideo()
+    }
+
+    Text("Playing video...")
+}
+```
+
+### 2. KeyboardObserver and Screen Changes
+
+Sometimes you need to know when the keyboard is opened or closed to scroll forms or change the height of elements.
+
+```kotlin
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_lifecycle.KeyboardObserver
+
+@Composable
+fun KeyboardAwareScreen() {
+    // Getting the current open/closed state of the keyboard as State
+    val isKeyboardOpen by KeyboardObserver.isKeyboardVisible().collectAsState(initial = false)
+
+    Box(modifier = Modifier.padding(bottom = if (isKeyboardOpen) 16.dp else 0.dp)) {
+        // Input fields (TextField)
+    }
+}
+```
+
+### 3. AppForegroundObserver (Background/Foreground)
+
+When the entire app (not just a specific screen) goes to the background or returns, you can implement security logic (like locking a banking app) using this tool.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_lifecycle.AppForegroundObserver
+
+@Composable
+fun SecureAppWrapper() {
+    AppForegroundObserver(
+        onAppBackgrounded = {
+            // When the user presses the home button and the app is hidden
+            lockApplication()
+        },
+        onAppForegrounded = {
+            // When the user opens the app again
+            requireBiometricAuth()
+        }
+    )
+}
+```
+
+## API Reference
+
+```kotlin
+@Composable
+fun LifecycleTimer(
+    intervalMillis: Long,
+    activeState: Lifecycle.State = Lifecycle.State.RESUMED,
+    onTick: () -> Unit
+)
+```
+A composable timer that ticks at specified intervals, but only when the lifecycle is in the designated active state. The timer automatically pauses if the user leaves the screen and resumes when the user returns.
+
+**Parameters:**
+- `intervalMillis`: Time interval between each tick in milliseconds.
+- `activeState`: The minimum lifecycle state (`Lifecycle.State`) required for the timer to run. Default is `Lifecycle.State.RESUMED`.
+- `onTick`: Function executed on each timer tick.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnCreateEffect(onCreate: () -> Unit)
+```
+A composable side-effect that executes a function when the `ON_CREATE` event occurs in the lifecycle.
+
+**Parameters:**
+- `onCreate`: Function executed when the lifecycle is created.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnDestroyEffect(onDestroy: () -> Unit)
+```
+A composable effect that executes a function when the `ON_DESTROY` event occurs in the lifecycle.
+
+**Parameters:**
+- `onDestroy`: Function executed when the lifecycle is destroyed.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnPauseEffect(onPause: () -> Unit)
+```
+A composable effect that executes a function when the `ON_PAUSE` event occurs in the lifecycle.
+
+**Parameters:**
+- `onPause`: Function executed when the lifecycle is paused.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnResumeEffect(onResume: () -> Unit)
+```
+A composable effect that executes a function when the `ON_RESUME` event occurs in the lifecycle.
+
+**Parameters:**
+- `onResume`: Function executed when the lifecycle is resumed.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnStartEffect(onStart: () -> Unit)
+```
+A composable effect that executes a function when the `ON_START` event occurs in the lifecycle.
+
+**Parameters:**
+- `onStart`: Function executed when the lifecycle is started.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnStopEffect(onStop: () -> Unit)
+```
+A composable effect that executes a function when the `ON_STOP` event occurs in the lifecycle.
+
+**Parameters:**
+- `onStop`: Function executed when the lifecycle is stopped.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnFirstCreateEffect(
+    key: String = "run_once", 
+    block: suspend () -> Unit
+)
+```
+A composable effect ensuring that the given block of code runs exactly once during the lifetime of the hosting composable, surviving recompositions.
+
+**Parameters:**
+- `key`: An optional key to uniquely identify this execution state. Default is `"run_once"`.
+- `block`: A suspend block that must be executed exactly once.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnScreenStateChangedEffect(onStateChanged: (isAwake: Boolean) -> Unit)
+```
+A composable effect that executes a function when the physical screen is turned on or off. This effect registers a `BroadcastReceiver` to listen to screen actions.
+
+**Parameters:**
+- `onStateChanged`: Function executed on screen state change. Receives `true` if the screen turns on, and `false` if it turns off.
+**Returns:** Unit
+
+
+```kotlin
+@Composable
+fun OnWindowFocusChangedEffect(onFocusChanged: (hasFocus: Boolean) -> Unit)
+```
+A composable effect that detects actual window focus changes. This tool is useful for detecting events like pulling down the notification panel or opening a system dialog.
+
+**Parameters:**
+- `onFocusChanged`: Function executed when window focus changes. Receives `true` if the window gains focus, and `false` otherwise.
+**Returns:** Unit

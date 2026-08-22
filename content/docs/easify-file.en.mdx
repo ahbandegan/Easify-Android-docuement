@@ -1,0 +1,203 @@
+---
+title: easify-file
+description: Usage guide for the easify-file module
+---
+
+# easify-file
+
+This module provides tools for selecting and managing files (images, videos, etc.) in Jetpack Compose and automatically handles permissions.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-file:2.1.0")
+```
+
+## Usage Guide
+
+### File Selection (FilePicker)
+The `FilePicker` composable allows you to easily pick an image or video from the gallery without dealing with the complexity of requesting permissions.
+
+```kotlin
+import android.net.Uri
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import ir.amirhesambandegan.easify_file.FilePicker
+import ir.amirhesambandegan.easify_file.MediaType
+
+@Composable
+fun FilePickerExample() {
+    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    var showPicker by remember { mutableStateOf(false) }
+
+    Column {
+        Button(onClick = { showPicker = true }) {
+            Text("Select Image")
+        }
+        
+        selectedUri?.let { uri ->
+            Text("Selected file URI: $uri")
+        }
+
+        if (showPicker) {
+            FilePicker(mediaType = MediaType.ImageOnly) { uri ->
+                selectedUri = uri
+                showPicker = false
+            }
+        }
+    }
+}
+```
+
+## API Reference
+
+```kotlin
+fun List<File>.compressToZip(zipFile: File): Boolean
+```
+Compresses a list of files into a Zip file.
+- **Parameters:** `zipFile` destination file to save the zip.
+- **Returns:** `Boolean` indicating success or failure.
+
+```kotlin
+fun File.unzipTo(targetFolder: File): Boolean
+```
+Extracts the contents of a Zip file into a specified folder.
+- **Parameters:** `targetFolder` destination folder for extraction.
+- **Returns:** `Boolean` (success/failure).
+
+```kotlin
+fun Long.toReadableFileSize(): String
+```
+Converts the file size (in bytes) into a readable string (like MB, KB, GB).
+- **Returns:** `String` representation of file size.
+
+```kotlin
+fun File.toBase64String(): String
+```
+Reads the contents of the file and converts it to a Base64 encoded string.
+- **Returns:** `String` containing Base64 data.
+
+```kotlin
+fun String.saveBase64ToFile(destination: File): Boolean
+```
+Converts a Base64 string and saves it as a file at the specified path.
+- **Parameters:** `destination` the target file.
+- **Returns:** `Boolean` (success/failure).
+
+```kotlin
+fun File.calculateMD5(): String
+```
+Calculates the MD5 hash for a file.
+- **Returns:** `String` containing the hash code.
+
+```kotlin
+fun File.calculateSHA256(): String
+```
+Calculates the SHA-256 hash for a file.
+- **Returns:** `String` containing the hash code.
+
+```kotlin
+fun Uri.getVideoThumbnail(context: Context): Bitmap?
+```
+Extracts a thumbnail from a video specified by Uri.
+- **Parameters:** `context` the app context.
+- **Returns:** `Bitmap?` extracted image or null on error.
+
+```kotlin
+@Composable
+fun FilePicker(mediaType: MediaType, onResult: (Uri?) -> Unit)
+```
+A composable to open the system file picker to select a media file.
+- **Parameters:** `mediaType` the type of media (photo/video), `onResult` callback invoked with the Uri after selection.
+
+```kotlin
+@Composable
+fun DocumentPicker(allowedMimeTypes: Array<String> = arrayOf("*/*"), onResult: (Uri?) -> Unit)
+```
+Opens the file picker for selecting documents and other file types.
+- **Parameters:** `allowedMimeTypes` allowed MIME types, `onResult` callback containing Uri.
+
+```kotlin
+@Composable
+fun DirectoryPicker(onResult: (Uri?) -> Unit)
+```
+Opens the folder picker to select a directory from the file system.
+- **Parameters:** `onResult` callback containing the directory Uri.
+
+```kotlin
+@Composable
+fun SystemCameraCapture(onResult: (Bitmap?) -> Unit)
+```
+Opens the system camera to quickly capture a photo and returns it as a Bitmap.
+- **Parameters:** `onResult` callback returning the captured image.
+
+```kotlin
+fun Bitmap.saveToGallery(context: Context, fileName: String, compressFormat: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG, quality: Int = 100): Boolean
+```
+Saves a Bitmap image directly to the phone's gallery (Pictures/Easify folder).
+- **Parameters:** `context`, `fileName`, `compressFormat`, `quality`.
+- **Returns:** `Boolean` save success.
+
+```kotlin
+fun File.saveToDownloads(context: Context, fileName: String, mimeType: String = "*/*"): Boolean
+```
+Saves or copies a file to the system's public Downloads folder (Downloads/Easify).
+- **Parameters:** `context`, `fileName`, `mimeType`.
+- **Returns:** `Boolean` copy success.
+
+```kotlin
+fun Uri.getFileName(context: Context): String
+```
+Retrieves the file name from a Uri.
+- **Parameters:** `context`.
+- **Returns:** `String` file name.
+
+```kotlin
+fun Uri.getFileSize(context: Context): Long
+```
+Retrieves the file size from a Uri.
+- **Parameters:** `context`.
+- **Returns:** `Long` size in bytes.
+
+```kotlin
+fun Uri.getMimeType(context: Context): String
+```
+Retrieves the MimeType of a file from a Uri.
+- **Parameters:** `context`.
+- **Returns:** `String` representing the MimeType.
+
+```kotlin
+fun Uri.toTempFile(context: Context): File?
+```
+Copies the data from a Uri to a temporary file in the app's cache for easier access.
+- **Parameters:** `context`.
+- **Returns:** `File?` the created temporary file.
+
+```kotlin
+fun Context.clearEasifyCache()
+```
+Clears all temporary files created in the cache.
+
+```kotlin
+enum class MediaType
+```
+Enum class to specify the media type for selection. Includes `ImageOnly`, `VideoOnly`, and `ImageAndVideo`.
+
+```kotlin
+@Composable
+fun MultipleFilePicker(mediaType: MediaType, maxItem: Int, onResult: (List<Uri>) -> Unit)
+```
+A composable for picking multiple media files at once.
+- **Parameters:** `mediaType`, `maxItem`, `onResult`.
+
+```kotlin
+object PermissionUtils
+```
+Utility for managing and checking necessary media read permissions in Android.
+- **Key Functions:**
+
+```kotlin
+fun getRequiredPermissions(context: Context, mediaType: MediaType): List<String>
+```

@@ -1,0 +1,232 @@
+---
+title: easify-security
+description: Usage guide for the easify-security module
+---
+
+# easify-security
+
+This module provides a suite of essential security tools to protect your Android application. These tools include checking if the device is rooted, if a VPN is active, and the status of Developer Options.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-security:2.1.0")
+```
+
+## Usage Guide
+
+### Device Security Checks
+Using `EasifySecurityUtils`, you can easily check various device states before executing sensitive operations.
+
+**Example usage in Jetpack Compose:**
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_security.EasifySecurityUtils
+
+@Composable
+fun SecurityDashboardScreen() {
+    val context = LocalContext.current
+    
+    val isRooted = EasifySecurityUtils.isRooted()
+    val isVpnActive = EasifySecurityUtils.isVpnActive(context)
+    val isDevMode = EasifySecurityUtils.isDevOptionsEnabled(context)
+
+    Column {
+        Text("Device Security Status:")
+        Text("Rooted: ${if (isRooted) "Yes 🔴" else "No 🟢"}")
+        Text("VPN Active: ${if (isVpnActive) "Yes 🟡" else "No 🟢"}")
+        Text("Developer Options: ${if (isDevMode) "Enabled 🟡" else "Disabled 🟢"}")
+    }
+}
+```
+
+## API Reference
+
+### `AdvancedSecurityChecker`
+```kotlin
+object AdvancedSecurityChecker
+```
+A utility object providing advanced security checks such as detecting Emulators, dangerous hooks, and verifying app signatures.
+
+```kotlin
+fun isEmulator(): Boolean
+```
+Checks whether the current device is likely an Emulator.
+- **Returns:** `Boolean` (`true` if it's an emulator).
+
+```kotlin
+fun hasDangerousHooks(): Boolean
+```
+Detects the presence of dangerous hooks (like Xposed or Frida) in the application process.
+- **Returns:** `Boolean` (`true` if suspicious hooks are found).
+
+```kotlin
+fun verifyAppSignature(context: Context, expectedSignatureSha256: String): Boolean
+```
+Verifies the application's signature against an expected SHA-256 hash.
+- **Parameters:** 
+  - `context`: Application context.
+  - `expectedSignatureSha256`: The expected SHA-256 signature.
+- **Returns:** `Boolean` (`true` if they match).
+
+### `AntiDebugger`
+```kotlin
+object AntiDebugger
+```
+A tool to detect and prevent debugging attempts on the application.
+
+```kotlin
+fun startMonitoring(scope: CoroutineScope = CoroutineScope(Dispatchers.Default))
+```
+Periodically checks if a debugger is attached to the application; if attached, it terminates the app.
+- **Parameters:** 
+  - `scope`: Coroutine scope for running the monitoring task.
+
+```kotlin
+fun stopMonitoring()
+```
+Stops the periodic monitoring and checking for a debugger.
+
+### `BackgroundPrivacyShield`
+```kotlin
+@Composable
+fun BackgroundPrivacyShield()
+```
+When the app is sent to the recent apps list (background), it blurs or hides the screen content by applying the `FLAG_SECURE` flag.
+
+### `CertificatePinnerHelper`
+```kotlin
+object CertificatePinnerHelper
+```
+A helper object to generate Certificate Pinning configurations to prevent Man-In-The-Middle (MITM) attacks.
+
+```kotlin
+fun getPinnerConfiguration(domain: String, vararg sha256Pins: String): Map<String, List<String>>
+```
+Generates an SSL Pinning configuration for a specific domain.
+- **Parameters:**
+  - `domain`: Domain name (e.g., "api.example.com").
+  - `sha256Pins`: SHA-256 hash pins.
+- **Returns:** `Map<String, List<String>>` containing the domain as the key and a list of pins.
+
+### `EasifySecurityUtils`
+```kotlin
+object EasifySecurityUtils
+```
+A utility object containing various security checks, including device root status, active VPN, and developer options.
+
+```kotlin
+fun isRooted(): Boolean
+```
+Checks the device for `su` binaries and signs of being rooted.
+- **Returns:** `Boolean` (`true` if rooted).
+
+```kotlin
+fun isVpnActive(context: Context): Boolean
+```
+Checks whether a VPN connection is active on the device.
+- **Returns:** `Boolean` (`true` if VPN is active).
+
+```kotlin
+fun isDevOptionsEnabled(context: Context): Boolean
+```
+Checks the status of Developer Options in the device settings.
+- **Returns:** `Boolean` (`true` if enabled).
+
+### `EncryptionManager`
+```kotlin
+object EncryptionManager
+```
+A tool for encrypting and decrypting data using the Android Keystore (AES-GCM method).
+
+```kotlin
+fun encrypt(alias: String, text: String): String
+```
+Encrypts text using the key associated with the `alias`.
+- **Parameters:**
+  - `alias`: The key identifier in the Keystore.
+  - `text`: Plain text to encrypt.
+- **Returns:** `String` (Base64 encrypted text along with IV).
+
+```kotlin
+fun decrypt(alias: String, encryptedText: String): String?
+```
+Decrypts the encrypted text using the key associated with the `alias`.
+- **Parameters:**
+  - `alias`: The key identifier in the Keystore.
+  - `encryptedText`: Base64 encrypted string.
+- **Returns:** `String?` (Decrypted plain text, or `null` on error).
+
+### `MalwareDetector`
+```kotlin
+object MalwareDetector
+```
+A tool for detecting suspicious environments such as Virtual Spaces or malicious packages and hook frameworks.
+
+```kotlin
+fun hasSuspiciousPackages(context: Context): Boolean
+```
+Checks installed apps on the device to find known and suspicious packages.
+- **Returns:** `Boolean` (`true` if a suspicious package is found).
+
+```kotlin
+fun isRunningInVirtualSpace(context: Context): Boolean
+```
+Detects if the application is running in a Virtual or Parallel Space.
+- **Returns:** `Boolean` (`true` if running in a virtual space).
+
+### `ScreenShield`
+```kotlin
+@Composable
+fun ScreenShield()
+```
+Prevents taking screenshots and screen recording by adding the `FLAG_SECURE` flag to the active window.
+
+```kotlin
+fun Modifier.screenShield(): Modifier
+```
+A Modifier that, when applied to any component, prevents screenshots across the entire window.
+
+### `SecureClipboard`
+```kotlin
+object SecureClipboard
+```
+A tool for securely managing the clipboard and minimizing the risk of sensitive information leakage through it.
+
+```kotlin
+fun copySensitiveText(
+    context: Context,
+    label: String,
+    text: String,
+    clearAfterMillis: Long = 30000L,
+    scope: CoroutineScope = CoroutineScope(Dispatchers.Main)
+)
+```
+Copies sensitive text to the system clipboard and clears it after a specified time.
+- **Parameters:**
+  - `context`: Application context.
+  - `label`: Clipboard title and label.
+  - `text`: Sensitive text to copy.
+  - `clearAfterMillis`: Time in milliseconds before automatic clearance (default is 30 seconds).
+
+### `SecureStorage`
+```kotlin
+object SecureStorage
+```
+A tool for securely storing information in the system using `EncryptedSharedPreferences`.
+
+```kotlin
+fun getEncryptedPreferences(context: Context, fileName: String = "secure_prefs"): SharedPreferences
+```
+Returns an instance of `EncryptedSharedPreferences` for storing and retrieving AES256 encrypted data.
+
+### `TapjackingProtector`
+```kotlin
+@Composable
+fun PreventTapjacking(content: @Composable () -> Unit)
+```
+Places Compose content in a FrameLayout with the `filterTouchesWhenObscured = true` attribute to prevent Tapjacking attacks.

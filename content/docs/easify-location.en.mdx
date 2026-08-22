@@ -1,0 +1,224 @@
+---
+title: easify-location
+description: Usage guide for the easify-location module
+---
+
+# easify-location
+
+This module is a complete suite for working with location. High-precision location tracking, distance and speed calculation, Geofencing, converting coordinates to addresses (SmartGeocoder), and even preventing fake coordinates (AntiFakeGps) are all included in this package.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-location:2.1.0")
+```
+
+## Usage Guide
+
+### 1. Continuous Location Tracking (LocationTracker)
+
+One of the most basic needs is continuously getting the user's latitude and longitude while maintaining optimal battery usage. This module makes this very simple.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_location.LocationTracker
+
+@Composable
+fun MapScreen() {
+    val context = LocalContext.current
+    val locationTracker = remember { LocationTracker(context) }
+    
+    // Get location as a Flow and keep it in state
+    val currentLocation by locationTracker.locationFlow.collectAsState(initial = null)
+
+    LaunchedEffect(Unit) {
+        // Start tracking location
+        locationTracker.startTracking()
+    }
+
+    if (currentLocation != null) {
+        Text("Latitude: ${currentLocation?.latitude}")
+        Text("Longitude: ${currentLocation?.longitude}")
+    } else {
+        Text("Finding location...")
+    }
+}
+```
+
+### 2. Location Jump Filter (AntiJumpFilter) and Fake Location (AntiFakeGps)
+
+For Fleet Management or ride-hailing apps, you need to filter out illogical locations caused by GPS errors.
+
+```kotlin
+import ir.amirhesambandegan.easify_location.AntiJumpFilter
+import ir.amirhesambandegan.easify_location.AntiFakeGps
+
+fun processLocation(location: Location) {
+    // Check if the user is using Fake GPS software
+    if (AntiFakeGps.isFakeLocation(location)) {
+        showError("Please turn off Fake GPS")
+        return
+    }
+
+    // Filter sudden GPS jumps
+    val validLocation = AntiJumpFilter.filter(location)
+    if (validLocation != null) {
+        updateMapLocation(validLocation)
+    }
+}
+```
+
+### 3. Convert Coordinates to Address with SmartGeocoder
+
+This tool is used when you want to convert latitude and longitude into a text address (street, city, etc.).
+
+```kotlin
+import ir.amirhesambandegan.easify_location.SmartGeocoder
+import kotlinx.coroutines.launch
+
+// Inside a CoroutineScope
+coroutineScope.launch {
+    val geocoder = SmartGeocoder(context)
+    val address = geocoder.getAddressFromLocation(lat = 35.6892, lng = 51.3890)
+    
+    println("User is located at: ${address?.fullAddress}")
+}
+```
+
+## API Reference
+
+### `AntiFakeGps` Class
+```kotlin
+fun Location.isMocked(): Boolean
+```
+Checks whether the current location was created by location mocking software (Fake GPS). Supports all Android versions.
+* **Parameters:** `Location` receiver object
+* **Returns:** A boolean value that is `true` if the location is mocked.
+
+### `AntiJumpFilter` Functions
+```kotlin
+fun Flow<Location?>.filterJumps(maxSpeedKmh: Float = 200f): Flow<Location?>
+```
+Used to filter out illogical locations that indicate sudden jumps or impossible speeds.
+* **Parameters:** `maxSpeedKmh`: Maximum reasonable speed in km/h (default 200f).
+* **Returns:** A new `Flow` with invalid locations filtered out.
+
+### `CoordinateFormatter` Functions
+```kotlin
+fun Location.toGoogleMapsLink(): String
+```
+Generates a shareable link for searching the coordinates on Google Maps.
+* **Returns:** String containing the Google Maps search link.
+
+```kotlin
+fun Location.toDMSFormat(): String
+```
+Converts decimal coordinates to Degrees, Minutes, and Seconds (DMS) format along with cardinal directions. (e.g., `35° 43' 12" N, 51° 24' 36" E`)
+* **Returns:** Formatted string of geographic specifications.
+
+### `GeofencingEngine` Functions
+```kotlin
+@Composable
+fun rememberGeofenceState(
+    currentLocation: Location?,
+    centerLat: Double,
+    centerLng: Double,
+    radiusMeters: Float
+): State<Boolean>
+```
+Reactively checks if the current location is within a geographical fence (a circle with a specific center and radius).
+* **Parameters:**
+  * `currentLocation`: User's live location
+  * `centerLat` and `centerLng`: Latitude and longitude of the fence's center
+  * `radiusMeters`: Radius of the circle in meters
+* **Returns:** A `State` containing `true` if within the area, otherwise `false`.
+
+### `GpsEnabler` Class and Functions
+```kotlin
+class GpsEnabler(
+    private val context: Context,
+    private val launchResolution: (IntentSenderRequest) -> Unit
+) {
+    fun requestGps(onResult: (Boolean) -> Unit = {})
+}
+```
+A tool to check if the device's GPS is turned on. If it's off, it uses Google Play Services to show a dialog asking the user to turn it on.
+* **Parameters:** `onResult` callback returning the success or failure of GPS activation.
+
+```kotlin
+@Composable
+fun rememberGpsEnabler(onResult: (Boolean) -> Unit): GpsEnabler
+```
+A Composable function to create and hold an instance of the `GpsEnabler` class in Jetpack Compose.
+
+### `LocationMath` Class
+```kotlin
+object LocationMath {
+    fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Float
+}
+```
+A module containing mathematical calculation tools related to geographical locations.
+* **`calculateDistance` function:** Calculates the distance between two geographical points using the specialized Haversine formula.
+* **Parameters:** Latitude and longitude of the origin and destination points.
+* **Returns:** Exact distance between the two points in meters.
+
+### `LocationTracker` Class and Functions
+```kotlin
+class LocationTracker(context: Context) {
+    fun getLocationUpdates(interval: Long = 10000L): Flow<Location?>
+}
+```
+A reactive tool based on Google's location service (FusedLocationProviderClient) to continuously and periodically get the user's location.
+* **Parameters:** `interval` (update interval in milliseconds).
+* **Returns:** A `Flow` emitting the user's locations.
+
+```kotlin
+class LocationLauncherState(
+    val tracker: LocationTracker,
+    var permissionRequested: Boolean
+)
+```
+A class for holding the location permission request state and the location tracker instance.
+
+```kotlin
+@Composable
+fun rememberLocationTracker(): LocationLauncherState
+```
+Manages the location tracker and the lifecycle of location permission requests in Jetpack Compose, initiating the request process if permissions are missing.
+
+### `SmartGeocoder` Functions
+```kotlin
+suspend fun Location.toAddress(context: Context, locale: Locale = Locale.getDefault()): Address?
+```
+Converts a geographical location (latitude and longitude) into a text address asynchronously.
+* **Parameters:** App context and `Locale`.
+* **Returns:** An `Address` object, or `null` if unsuccessful.
+
+```kotlin
+fun Address.toFormattedString(): String
+```
+Formats all parts of a found address into a single continuous comma-separated string.
+
+```kotlin
+suspend fun Geocoder.getCoordinates(addressName: String): Location?
+```
+Finds the location (latitude and longitude) for a specific text address using `Geocoder`.
+
+### `SpeedAndETA` Functions
+```kotlin
+fun Location.getSpeedKmh(): Float
+```
+Calculates the user's movement speed in kilometers per hour.
+* **Returns:** Speed as Float. Returns `0f` if speed information is unavailable.
+
+```kotlin
+fun Location.calculateETA(destinationLat: Double, destinationLng: Double): Int?
+```
+Estimates the user's Estimated Time of Arrival (ETA) to a specific destination using current speed and straight-line distance calculation.
+* **Parameters:** Latitude and longitude of the destination point.
+* **Returns:** Estimated remaining time in minutes. Returns `null` if the movement speed is very low (less than 5 km/h).

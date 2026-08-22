@@ -1,0 +1,214 @@
+---
+title: easify-lifecycle
+description: Benutzerhandbuch für das Modul easify-lifecycle
+---
+
+# easify-lifecycle
+
+Das Verwalten des Lebenszyklus (Lifecycle) in Compose kann manchmal komplex sein. Dieses Modul bietet verschiedene Effekte und Beobachter (Observers) für eine einfache und saubere Kontrolle über den Lebenszyklus von Komponenten und der Activity (z. B. das Ausführen von Code bei Resume, Pause usw.).
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-lifecycle:2.1.0")
+```
+
+## Benutzerhandbuch
+
+### 1. Verwendung von Lifecycle-Effekten
+
+Anstatt sich mit `DisposableEffect` und `LifecycleEventObserver` zu befassen, können Sie einfach vorgefertigte Funktionen wie `OnResumeEffect`, `OnPauseEffect`, `OnCreateEffect` und so weiter verwenden.
+
+```kotlin
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_lifecycle.OnResumeEffect
+import ir.amirhesambandegan.easify_lifecycle.OnPauseEffect
+
+@Composable
+fun VideoPlayerScreen() {
+    
+    // Code in diesem Block wird nur ausgeführt, wenn der Bildschirm in den Status "Resume" wechselt
+    OnResumeEffect {
+        // Video abspielen oder Daten aktualisieren starten
+        playVideo()
+    }
+
+    // Code in diesem Block wird nur ausgeführt, wenn der Bildschirm pausiert wird
+    OnPauseEffect {
+        // Video pausieren
+        pauseVideo()
+    }
+
+    Text("Video wird abgespielt...")
+}
+```
+
+### 2. KeyboardObserver und Bildschirmänderungen
+
+Manchmal müssen Sie wissen, wann die Tastatur geöffnet oder geschlossen wird, um Formulare zu scrollen oder die Höhe von Elementen zu ändern.
+
+```kotlin
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_lifecycle.KeyboardObserver
+
+@Composable
+fun KeyboardAwareScreen() {
+    // Abrufen des aktuellen geöffneten/geschlossenen Status der Tastatur als State
+    val isKeyboardOpen by KeyboardObserver.isKeyboardVisible().collectAsState(initial = false)
+
+    Box(modifier = Modifier.padding(bottom = if (isKeyboardOpen) 16.dp else 0.dp)) {
+        // Eingabefelder (TextField)
+    }
+}
+```
+
+### 3. AppForegroundObserver (Hintergrund/Vordergrund)
+
+Wenn die gesamte App (nicht nur ein bestimmter Bildschirm) in den Hintergrund tritt oder zurückkehrt, können Sie mit diesem Tool Sicherheitslogiken implementieren (wie das Sperren einer Banking-App).
+
+```kotlin
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_lifecycle.AppForegroundObserver
+
+@Composable
+fun SecureAppWrapper() {
+    AppForegroundObserver(
+        onAppBackgrounded = {
+            // Wenn der Benutzer die Home-Taste drückt und die App ausgeblendet wird
+            lockApplication()
+        },
+        onAppForegrounded = {
+            // Wenn der Benutzer die App wieder öffnet
+            requireBiometricAuth()
+        }
+    )
+}
+```
+
+## API-Referenz
+
+```kotlin
+@Composable
+fun LifecycleTimer(
+    intervalMillis: Long,
+    activeState: Lifecycle.State = Lifecycle.State.RESUMED,
+    onTick: () -> Unit
+)
+```
+Ein Composable-Timer, der in angegebenen Intervallen tickt, jedoch nur, wenn sich der Lebenszyklus im festgelegten aktiven Status befindet. Der Timer wird automatisch angehalten, wenn der Benutzer den Bildschirm verlässt, und fortgesetzt, wenn der Benutzer zurückkehrt.
+
+**Parameter:**
+- `intervalMillis`: Zeitintervall zwischen jedem Tick in Millisekunden.
+- `activeState`: Der mindestens erforderliche Lebenszyklusstatus (`Lifecycle.State`), damit der Timer ausgeführt wird. Standard ist `Lifecycle.State.RESUMED`.
+- `onTick`: Funktion, die bei jedem Timer-Tick ausgeführt wird.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnCreateEffect(onCreate: () -> Unit)
+```
+Ein Composable-Nebeneffekt, der eine Funktion ausführt, wenn das Ereignis `ON_CREATE` im Lebenszyklus auftritt.
+
+**Parameter:**
+- `onCreate`: Funktion, die ausgeführt wird, wenn der Lebenszyklus erstellt wird.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnDestroyEffect(onDestroy: () -> Unit)
+```
+Ein Composable-Effekt, der eine Funktion ausführt, wenn das Ereignis `ON_DESTROY` im Lebenszyklus auftritt.
+
+**Parameter:**
+- `onDestroy`: Funktion, die ausgeführt wird, wenn der Lebenszyklus zerstört wird.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnPauseEffect(onPause: () -> Unit)
+```
+Ein Composable-Effekt, der eine Funktion ausführt, wenn das Ereignis `ON_PAUSE` im Lebenszyklus auftritt.
+
+**Parameter:**
+- `onPause`: Funktion, die ausgeführt wird, wenn der Lebenszyklus pausiert wird.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnResumeEffect(onResume: () -> Unit)
+```
+Ein Composable-Effekt, der eine Funktion ausführt, wenn das Ereignis `ON_RESUME` im Lebenszyklus auftritt.
+
+**Parameter:**
+- `onResume`: Funktion, die ausgeführt wird, wenn der Lebenszyklus fortgesetzt (resumed) wird.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnStartEffect(onStart: () -> Unit)
+```
+Ein Composable-Effekt, der eine Funktion ausführt, wenn das Ereignis `ON_START` im Lebenszyklus auftritt.
+
+**Parameter:**
+- `onStart`: Funktion, die ausgeführt wird, wenn der Lebenszyklus gestartet wird.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnStopEffect(onStop: () -> Unit)
+```
+Ein Composable-Effekt, der eine Funktion ausführt, wenn das Ereignis `ON_STOP` im Lebenszyklus auftritt.
+
+**Parameter:**
+- `onStop`: Funktion, die ausgeführt wird, wenn der Lebenszyklus gestoppt wird.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnFirstCreateEffect(
+    key: String = "run_once", 
+    block: suspend () -> Unit
+)
+```
+Ein Composable-Effekt, der sicherstellt, dass der angegebene Codeblock während der Lebensdauer des hostenden Composables genau einmal ausgeführt wird und Recompositions übersteht.
+
+**Parameter:**
+- `key`: Ein optionaler Schlüssel zur eindeutigen Identifizierung dieses Ausführungsstatus. Standard ist `"run_once"`.
+- `block`: Ein Suspend-Block, der genau einmal ausgeführt werden muss.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnScreenStateChangedEffect(onStateChanged: (isAwake: Boolean) -> Unit)
+```
+Ein Composable-Effekt, der eine Funktion ausführt, wenn der physische Bildschirm ein- oder ausgeschaltet wird. Dieser Effekt registriert einen `BroadcastReceiver`, um auf Bildschirmaktionen zu lauschen.
+
+**Parameter:**
+- `onStateChanged`: Funktion, die bei Änderung des Bildschirmstatus ausgeführt wird. Erhält `true`, wenn sich der Bildschirm einschaltet, und `false`, wenn er sich ausschaltet.
+**Rückgabe:** Keine (Unit)
+
+
+```kotlin
+@Composable
+fun OnWindowFocusChangedEffect(onFocusChanged: (hasFocus: Boolean) -> Unit)
+```
+Ein Composable-Effekt, der tatsächliche Änderungen des Fensterfokus erkennt. Dieses Tool ist nützlich zum Erkennen von Ereignissen wie dem Herunterziehen des Benachrichtigungsfelds oder dem Öffnen eines Systemdialogs.
+
+**Parameter:**
+- `onFocusChanged`: Funktion, die ausgeführt wird, wenn sich der Fensterfokus ändert. Erhält `true`, wenn das Fenster den Fokus erhält, andernfalls `false`.
+**Rückgabe:** Keine (Unit)

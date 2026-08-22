@@ -1,0 +1,131 @@
+---
+title: easify-format
+description: Utilities for formatting text and numbers
+---
+
+# easify-format
+
+The `easify-format` module provides a set of highly practical utility functions for formatting text, numbers, times, and strings in Android applications.
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-format:2.1.0")
+```
+
+## Usage Guide
+
+### Currency Formatting
+You can easily convert numbers to standard currency formats.
+
+```kotlin
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_format.toCurrency
+
+@Composable
+fun FormatExample() {
+    val price = 1500000.75
+    // Returns a string based on the default Locale, e.g. $1,500,000.75
+    val formattedPrice = price.toCurrency()
+
+    Text(text = "Price: $formattedPrice")
+}
+```
+
+## API Reference
+
+```kotlin
+fun String.highlightMatch(query: String, highlightColor: Color = Color.Yellow, fontWeight: FontWeight = FontWeight.Bold): AnnotatedString
+```
+Highlights a specific search term (`query`) inside a string and returns an `AnnotatedString` (useful in Jetpack Compose).
+- **Parameters:** `query` the search term, `highlightColor` the highlight color, `fontWeight` the font weight.
+
+```kotlin
+fun String.toLinkifiedAnnotatedString(linkColor: Color = Color.Blue): AnnotatedString
+```
+Converts a string into an `AnnotatedString` where URLs and mentions (starting with @) become clickable links.
+- **Parameters:** `linkColor` the color of the links.
+
+```kotlin
+fun Long.toCompactFormat(): String
+```
+Formats a large number into a compact string representation (e.g., 1.2K or 3.5M).
+- **Returns:** A compact string of the number.
+
+```kotlin
+fun Int.toOrdinal(language: String = "en"): String
+```
+Converts an integer into an ordinal string format, like "1st, 2nd, 3rd" in English or equivalent in Persian.
+- **Parameters:** `language` the language code (default is "en" or "fa").
+
+```kotlin
+fun String.toTitleCase(): String
+```
+Converts a string to Title Case, where the first letter of every word is capitalized.
+
+```kotlin
+fun String.toCamelCase(): String
+```
+Converts a string to camelCase (removing spaces and capitalizing the first letter of subsequent words).
+
+```kotlin
+fun String.toSnakeCase(): String
+```
+Converts a string to snake_case (replacing spaces with underscores).
+
+```kotlin
+fun String.toSlug(): String
+```
+Converts a string into a URL-friendly slug, replacing invalid characters and spaces with hyphens (-).
+
+```kotlin
+fun String.stripHtmlTags(): String
+```
+Removes all HTML tags from a string and returns Plain Text.
+
+```kotlin
+fun String.toInitials(): String
+```
+Extracts the initials of a string. For single words, it returns the first letter, and for multiple words, the first letters of the first and last words.
+
+```kotlin
+fun String.maskEmail(): String
+```
+Masks an email address for privacy, replacing the middle characters with asterisks (e.g., joh***@example.com).
+
+```kotlin
+fun String.maskPhone(): String
+```
+Masks a phone number, showing only the first 4 and last 4 digits, replacing the middle ones with asterisks.
+
+```kotlin
+fun String.maskCard(): String
+```
+Masks a 16-digit card number, showing only the first 4 and last 4 digits.
+
+```kotlin
+fun String.similarityPercentage(other: String): Double
+```
+Calculates the similarity percentage between two strings using the Levenshtein Distance algorithm.
+- **Returns:** A value between 0.0 and 100.0 as the percentage.
+
+```kotlin
+fun Long.toTimeAgo(): String
+```
+Converts a timestamp (in milliseconds) into a human-readable "time ago" string format (e.g., "just now", "yesterday", "2 days ago").
+
+```kotlin
+fun Long.toTimerFormat(): String
+```
+Converts a duration (in seconds) into a standard timer format (MM:SS or HH:MM:SS).
+
+```kotlin
+fun Number.toCurrency(locale: Locale = Locale.getDefault()): String
+```
+Formats a number as a currency string based on the specified Locale.
+
+```kotlin
+fun Long.toTimeString(): String
+```
+Converts a duration (in milliseconds) into a string time format (mm:ss or HH:mm:ss).

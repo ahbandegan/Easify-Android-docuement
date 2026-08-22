@@ -1,0 +1,206 @@
+---
+title: easify-biometric
+description: Very simple setup for Biometric Authentication (Fingerprint & Face) in Jetpack Compose
+---
+
+# easify-biometric
+
+The `easify-biometric` module is a complete and powerful tool for implementing **Biometric Authentication** (Fingerprint, Face Recognition, etc.) in Android apps using **Jetpack Compose**. This module significantly simplifies the complex process of Android biometrics into just one line of code!
+
+## Features
+- Super simple usage with Jetpack Compose
+- Full support for `BiometricPrompt`
+- Secure management of cryptographic keys (CryptoBiometric)
+- Detection of biometric support on the device
+- Support for Fallback (PIN, Pattern, Password)
+- Built-in Grace Period system
+- Detection of biometric hardware type (Face, Fingerprint, Iris)
+- Customized Haptic Feedback
+
+## Installation
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-biometric:2.1.0")
+```
+
+## Quick Start
+
+### 1. Simple Biometric Launcher
+If you want to trigger the authentication prompt inside an action (e.g., clicking a button), you can use `rememberBiometricLauncher`.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import ir.amirhesambandegan.easify_biometric.rememberBiometricLauncher
+import ir.amirhesambandegan.easify_biometric.BiometricResult
+
+@Composable
+fun SimpleBiometricLogin() {
+    var authMessage by remember { mutableStateOf("Not authenticated") }
+
+    val launcher = rememberBiometricLauncher { result ->
+        when (result) {
+            is BiometricResult.Success -> authMessage = "Authentication Successful!"
+            is BiometricResult.Error -> authMessage = "Error: ${result.errString}"
+            is BiometricResult.Failed -> authMessage = "Authentication Failed."
+        }
+    }
+
+    Column {
+        Text(text = authMessage)
+        Button(onClick = { 
+            launcher?.launch(
+                title = "Please verify your identity",
+                subtitle = "Use fingerprint or face"
+            ) 
+        }) {
+            Text("Login with Biometric")
+        }
+    }
+}
+```
+
+### 2. Using `BiometricAutoShield`
+This Composable acts like a protective shield for your sensitive content. If the app goes to the background and returns to the foreground, it automatically locks the screen and prompts for biometric authentication. It comes with a built-in UI (which can be fully customized).
+
+```kotlin
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_biometric.BiometricAutoShield
+
+@Composable
+fun SecureAppScreen() {
+    BiometricAutoShield(
+        title = "App is locked",
+        subtitle = "Please authenticate to view the contents",
+        description = "This section contains sensitive information."
+    ) {
+        // Content that will be displayed only after successful authentication
+        Text(text = "Confidential Information: Your balance is ...")
+    }
+}
+```
+
+### 3. Checking Biometric Support (`BiometricUtils`)
+Before showing the biometric prompt, you can check if the device supports biometric hardware or if a fingerprint is enrolled.
+
+```kotlin
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_biometric.BiometricUtils
+
+@Composable
+fun CheckBiometricSupport() {
+    val context = LocalContext.current
+    val isSupported = remember { BiometricUtils.isBiometricReady(context) }
+    
+    if (isSupported) {
+        Text("The device supports biometric authentication.")
+    } else {
+        Text("Biometric authentication is not supported on this device.")
+    }
+}
+```
+
+## API Reference
+
+### BiometricAutoShield
+```kotlin
+@Composable
+fun BiometricAutoShield(
+    isUnlocked: Boolean,
+    onUnlockRequest: () -> Unit,
+    content: @Composable () -> Unit
+)
+```
+A Composable that automatically locks the screen on `ON_RESUME` lifecycle event and requests biometric authentication. `isUnlocked` represents the current state, `onUnlockRequest` executes when the prompt is requested, and `content` displays the secure content.
+
+### BiometricChangeDetector
+```kotlin
+object BiometricChangeDetector {
+    fun hasBiometricChanged(): Boolean
+}
+```
+Checks if the biometric records on the device have changed (e.g., a new fingerprint added). Returns `true` if changes are detected, otherwise `false`.
+
+### BiometricHapticFeedback
+```kotlin
+object BiometricHapticFeedback {
+    fun playSuccessVibration(context: Context)
+    fun playErrorVibration(context: Context)
+}
+```
+Plays a custom vibration pattern on the system. `context` is received and appropriate vibration is triggered based on success or failure. Returns nothing.
+
+### BiometricResult
+```kotlin
+sealed class BiometricResult {
+    data class Success(val result: BiometricPrompt.AuthenticationResult) : BiometricResult()
+    data class Error(val errorCode: Int, val errString: CharSequence) : BiometricResult()
+    data object Failed : BiometricResult()
+}
+```
+A class for representing the output states of biometric authentication. Includes `Success` (contains authentication result), `Error` (error code and message), and `Failed`.
+
+### BiometricUtils
+```kotlin
+object BiometricUtils {
+    fun canAuthenticate(context: Context, authenticators: Int = BIOMETRIC_STRONG or DEVICE_CREDENTIAL): Boolean
+}
+```
+Checks whether the device can perform biometric authentication. Takes `context` and `authenticators` type and returns a Boolean.
+
+### BiometricLauncher
+```kotlin
+class BiometricLauncher(private val activity: FragmentActivity, private val onResult: (BiometricResult) -> Unit) {
+    fun launch(title: String, subtitle: String? = null, description: String? = null, negativeButtonText: String = "Cancel")
+}
+@Composable
+fun rememberBiometricLauncher(onResult: (BiometricResult) -> Unit): BiometricLauncher?
+```
+A class for launching the biometric prompt. The `launch` method receives prompt details and displays the dialog. The `rememberBiometricLauncher` composable generates an instance of this class and binds it to the current context.
+
+### CryptoBiometricLauncher
+```kotlin
+class CryptoBiometricLauncher(private val activity: FragmentActivity, private val onResult: (BiometricResult) -> Unit) {
+    fun launchCrypto(title: String, subtitle: String? = null)
+}
+```
+A class for launching biometric authentication integrated with the Android Keystore system. Takes prompt details and executes a secure flow.
+
+### DeviceCredentialFallback
+```kotlin
+object DeviceCredentialFallback {
+    fun launchWithFallback(activity: FragmentActivity, title: String, subtitle: String? = null, onResult: (BiometricResult) -> Unit)
+}
+```
+A launcher class with the ability to fallback to alternative methods like PIN, Pattern, or Password in case biometric authentication is unavailable or fails. It takes prompt strings and returns nothing.
+
+### EnrollmentNavigator
+```kotlin
+object EnrollmentNavigator {
+    fun openBiometricEnrollmentSettings(context: Context)
+}
+```
+Opens the device's biometric settings page to register a fingerprint or face. Executes the flow by taking `context`.
+
+### GracePeriodManager
+```kotlin
+object GracePeriodManager {
+    fun updateUnlockTime()
+    fun isGracePeriodActive(): Boolean
+    fun setGracePeriod(seconds: Long)
+}
+```
+Manages the grace period duration after a successful unlock. `updateUnlockTime` records the current time. `isGracePeriodActive` returns a Boolean, and `setGracePeriod` sets the allowed time (in seconds).
+
+### HardwareTypeAnalyzer
+```kotlin
+enum class BiometricHardwareType { FACE, FINGERPRINT, IRIS, NONE }
+
+object HardwareTypeAnalyzer {
+    fun getHardwareType(context: Context): BiometricHardwareType
+}
+```
+Analyzes the device's hardware sensors. `getHardwareType` checks what kind of sensor the device has and returns its type (as an Enum).
