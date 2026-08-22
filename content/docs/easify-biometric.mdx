@@ -1,0 +1,200 @@
+---
+title: easify-biometric
+description: راهنمای استفاده از ماژول easify-biometric
+---
+
+# easify-biometric
+
+ماژول `easify-biometric` ابزارهایی قدرتمند برای احراز هویت بیومتریک (اثر انگشت، تشخیص چهره و غیره) در برنامه‌های Android مبتنی بر Jetpack Compose ارائه می‌دهد. این ماژول امکاناتی نظیر اعتبارسنجی بیومتریک، قفل خودکار صفحه (Auto Shield) و مدیریت تغییرات بیومتریک را فراهم می‌کند.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-biometric:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### ۱. استفاده از `rememberBiometricLauncher`
+این تابع یک کپسوله‌سازی ساده برای اجرای دیالوگ پیش‌فرض احراز هویت بیومتریک اندروید در محیط Compose فراهم می‌کند.
+
+```kotlin
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_biometric.rememberBiometricLauncher
+
+@Composable
+fun BiometricAuthScreen() {
+    var authResult by remember { mutableStateOf("وضعیت: نامشخص") }
+    
+    val biometricLauncher = rememberBiometricLauncher(
+        title = "ورود امن",
+        subtitle = "برای ورود از اثر انگشت یا چهره استفاده کنید",
+        onSuccess = { authResult = "وضعیت: احراز هویت موفق!" },
+        onError = { errorCode, errString -> authResult = "خطا: $errString ($errorCode)" },
+        onFailed = { authResult = "وضعیت: احراز هویت ناموفق" }
+    )
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(text = authResult)
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = { biometricLauncher.authenticate() }) {
+            Text("احراز هویت بیومتریک")
+        }
+    }
+}
+```
+
+### ۲. استفاده از `BiometricAutoShield`
+این کامپوننت یک لایه امنیتی است که کل محتوای زیرین خود را قفل می‌کند تا زمانی که کاربر به صورت بیومتریک احراز هویت شود. این قابلیت برای مخفی کردن اطلاعات حساس (مثل برنامه‌های بانکی) بسیار مفید است.
+
+```kotlin
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_biometric.BiometricAutoShield
+
+@Composable
+fun SecureAppScreen() {
+    BiometricAutoShield(
+        title = "برنامه قفل شده است",
+        subtitle = "جهت مشاهده اطلاعات محرمانه احراز هویت کنید",
+        description = "این بخش دارای اطلاعات حساس است."
+    ) {
+        // محتوایی که پس از احراز هویت موفق نمایش داده می‌شود
+        Text(text = "اطلاعات محرمانه شما: موجودی حساب ...")
+    }
+}
+```
+
+### ۳. بررسی در دسترس بودن بیومتریک (`BiometricUtils`)
+شما می‌توانید قبل از درخواست احراز هویت، بررسی کنید که آیا دستگاه کاربر اصلاً از بیومتریک پشتیبانی می‌کند یا خیر.
+
+```kotlin
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_biometric.BiometricUtils
+
+@Composable
+fun CheckBiometricSupport() {
+    val context = LocalContext.current
+    val isSupported = remember { BiometricUtils.isBiometricReady(context) }
+    
+    if (isSupported) {
+        Text("دستگاه شما از بیومتریک پشتیبانی می‌کند.")
+    } else {
+        Text("بیومتریک در این دستگاه فعال نیست یا پشتیبانی نمی‌شود.")
+    }
+}
+`
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+### BiometricAutoShield
+```kotlin
+@Composable
+fun BiometricAutoShield(
+    isUnlocked: Boolean,
+    onUnlockRequest: () -> Unit,
+    content: @Composable () -> Unit
+)
+```
+یک Composable که به‌صورت خودکار در زمان بازگشت به برنامه (ON_RESUME) صفحه را قفل کرده و درخواست احراز هویت می‌دهد (مگر در زمان دوره ارفاق). پارامتر `isUnlocked` وضعیت فعلی قفل، `onUnlockRequest` تابع درخواست بازگشایی و `content` محتوای اصلی را دریافت می‌کند. چیزی برنمی‌گرداند.
+
+### BiometricChangeDetector
+```kotlin
+object BiometricChangeDetector {
+    fun hasBiometricChanged(): Boolean
+}
+```
+تشخیص تغییرات در داده‌های بیومتریک دستگاه (مثل اضافه شدن اثر انگشت جدید). مقداری برنمی‌گیرد و در صورت تغییر `true` و در غیر این‌صورت `false` برمی‌گرداند.
+
+### BiometricHapticFeedback
+```kotlin
+object BiometricHapticFeedback {
+    fun playSuccessVibration(context: Context)
+    fun playErrorVibration(context: Context)
+}
+```
+ایجاد بازخورد لرزشی در سیستم. `context` را می‌گیرد و لرزش متناسب با موفقیت یا خطا را پخش می‌کند. چیزی برنمی‌گرداند.
+
+### BiometricResult
+```kotlin
+sealed class BiometricResult {
+    data class Success(val result: BiometricPrompt.AuthenticationResult) : BiometricResult()
+    data class Error(val errorCode: Int, val errString: CharSequence) : BiometricResult()
+    data object Failed : BiometricResult()
+}
+```
+کلاسی برای نمایش وضعیت نتیجه احراز هویت. شامل کلاس‌های `Success` (داده‌های موفقیت)، `Error` (کد و پیام خطا) و `Failed` است.
+
+### BiometricUtils
+```kotlin
+object BiometricUtils {
+    fun canAuthenticate(context: Context, authenticators: Int = BIOMETRIC_STRONG or DEVICE_CREDENTIAL): Boolean
+}
+```
+بررسی امکان‌پذیر بودن احراز هویت بیومتریک در دستگاه. `context` و انواع `authenticators` مجاز را گرفته و Boolean برمی‌گرداند.
+
+### BiometricLauncher
+```kotlin
+class BiometricLauncher(private val activity: FragmentActivity, private val onResult: (BiometricResult) -> Unit) {
+    fun launch(title: String, subtitle: String? = null, description: String? = null, negativeButtonText: String = "Cancel")
+}
+@Composable
+fun rememberBiometricLauncher(onResult: (BiometricResult) -> Unit): BiometricLauncher?
+```
+اجراکننده پرامپت بیومتریک. متد `launch` با گرفتن عناوین و دکمه‌ها دیالوگ را نمایش می‌دهد. متد کامپوزبل `rememberBiometricLauncher` یک نمونه از کلاس را می‌سازد و به چرخه حیات متصل می‌کند.
+
+### CryptoBiometricLauncher
+```kotlin
+class CryptoBiometricLauncher(private val activity: FragmentActivity, private val onResult: (BiometricResult) -> Unit) {
+    fun launchCrypto(title: String, subtitle: String? = null)
+}
+```
+اجراکننده احراز هویت متصل به سیستم رمزنگاری (Keystore). پارامترهای نمایش را دریافت و فرآیند ایمن‌تر را اجرا می‌کند.
+
+### DeviceCredentialFallback
+```kotlin
+object DeviceCredentialFallback {
+    fun launchWithFallback(activity: FragmentActivity, title: String, subtitle: String? = null, onResult: (BiometricResult) -> Unit)
+}
+```
+اجرای پرامپت با قابلیت استفاده از روش‌های جایگزین مثل پین یا الگو در صورت عدم کارکرد بیومتریک. اطلاعات متنی را گرفته و چیزی برنمی‌گرداند.
+
+### EnrollmentNavigator
+```kotlin
+object EnrollmentNavigator {
+    fun openBiometricEnrollmentSettings(context: Context)
+}
+```
+باز کردن صفحه تنظیمات بیومتریک دستگاه برای ثبت اثر انگشت یا چهره. با گرفتن `context` فرآیند را انجام می‌دهد.
+
+### GracePeriodManager
+```kotlin
+object GracePeriodManager {
+    fun updateUnlockTime()
+    fun isGracePeriodActive(): Boolean
+    fun setGracePeriod(seconds: Long)
+}
+```
+مدیریت مدت زمان ارفاق پس از باز شدن قفل. `updateUnlockTime` زمان فعلی را ثبت می‌کند. `isGracePeriodActive` بولی برمی‌گرداند و `setGracePeriod` زمان مجاز (ثانیه) را تنظیم می‌کند.
+
+### HardwareTypeAnalyzer
+```kotlin
+enum class BiometricHardwareType { FACE, FINGERPRINT, IRIS, NONE }
+
+object HardwareTypeAnalyzer {
+    fun getHardwareType(context: Context): BiometricHardwareType
+}
+```
+تحلیل‌گر سخت‌افزار دستگاه. تابع `getHardwareType` بررسی می‌کند دستگاه چه نوع حسگری دارد و نوع آن (از Enum مربوطه) را برمی‌گرداند.
+```

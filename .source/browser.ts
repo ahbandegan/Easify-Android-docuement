@@ -1,0 +1,12 @@
+// @ts-nocheck
+import { browser } from 'fumadocs-mdx/runtime/browser';
+import type * as Config from '../source.config';
+
+const create = browser<typeof Config, import("fumadocs-mdx/runtime/types").InternalTypeConfig & {
+  DocData: {
+  }
+}>();
+const browserCollections = {
+  docs: create.doc("docs", {"easify-android.mdx": () => import("../content/docs/easify-android.mdx?collection=docs"), "easify-biometric.mdx": () => import("../content/docs/easify-biometric.mdx?collection=docs"), "easify-bluetooth.mdx": () => import("../content/docs/easify-bluetooth.mdx?collection=docs"), "easify-camera.mdx": () => import("../content/docs/easify-camera.mdx?collection=docs"), "easify-context.mdx": () => import("../content/docs/easify-context.mdx?collection=docs"), "easify-file.mdx": () => import("../content/docs/easify-file.mdx?collection=docs"), "easify-fintech.mdx": () => import("../content/docs/easify-fintech.mdx?collection=docs"), "easify-form.mdx": () => import("../content/docs/easify-form.mdx?collection=docs"), "easify-format.mdx": () => import("../content/docs/easify-format.mdx?collection=docs"), "easify-haptic.mdx": () => import("../content/docs/easify-haptic.mdx?collection=docs"), "easify-image.mdx": () => import("../content/docs/easify-image.mdx?collection=docs"), "easify-lifecycle.mdx": () => import("../content/docs/easify-lifecycle.mdx?collection=docs"), "easify-location.mdx": () => import("../content/docs/easify-location.mdx?collection=docs"), "easify-network.mdx": () => import("../content/docs/easify-network.mdx?collection=docs"), "easify-notification.mdx": () => import("../content/docs/easify-notification.mdx?collection=docs"), "easify-permission.mdx": () => import("../content/docs/easify-permission.mdx?collection=docs"), "easify-persian.mdx": () => import("../content/docs/easify-persian.mdx?collection=docs"), "easify-security.mdx": () => import("../content/docs/easify-security.mdx?collection=docs"), "easify-sensor.mdx": () => import("../content/docs/easify-sensor.mdx?collection=docs"), "easify-storage.mdx": () => import("../content/docs/easify-storage.mdx?collection=docs"), "easify-ui.mdx": () => import("../content/docs/easify-ui.mdx?collection=docs"), "easify-validation.mdx": () => import("../content/docs/easify-validation.mdx?collection=docs"), "index.mdx": () => import("../content/docs/index.mdx?collection=docs"), }),
+};
+export default browserCollections;

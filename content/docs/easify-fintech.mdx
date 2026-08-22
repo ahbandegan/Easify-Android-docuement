@@ -1,0 +1,202 @@
+---
+title: easify-fintech
+description: راهنمای استفاده از ماژول easify-fintech
+---
+
+# easify-fintech
+
+این ماژول شامل ابزارها و ویجت‌های مرتبط با امور مالی و فین‌تک (Fintech) است. از جمله نمایش موجودی، اعتبارسنجی کارت‌های بانکی، کد ملی، شماره شبا و تبدیل تاریخ.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-fintech:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### ۱. نمایش موجودی با قابلیت مخفی‌سازی (EasifyBalanceText)
+یک ویجت آماده برای نمایش مبلغ با واحد پولی و قابلیت مخفی کردن آن با افکت بلور (Blur).
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import ir.amirhesambandegan.easify_fintech.EasifyBalanceText
+
+@Composable
+fun BalanceExample() {
+    EasifyBalanceText(
+        balance = 12500000L,
+        currency = "تومان",
+        initiallyHidden = false,
+        useBlurEffect = true
+    )
+}
+```
+
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+```kotlin
+fun String.isValidLegalId(): Boolean
+```
+بررسی می‌کند که آیا رشته مورد نظر یک شناسه ملی اشخاص حقوقی معتبر ایرانی است یا خیر.
+- **خروجی:** `Boolean` که نشان‌دهنده معتبر بودن شناسه حقوقی است.
+
+```kotlin
+fun String.isValidIranianPostalCode(): Boolean
+```
+بررسی می‌کند که آیا رشته مورد نظر یک کد پستی معتبر ۱۰ رقمی ایرانی است یا خیر.
+- **خروجی:** `Boolean` که نشان‌دهنده معتبر بودن کد پستی است.
+
+```kotlin
+object BillValidator
+```
+ابزاری برای اعتبارسنجی قبوض خدماتی ایرانی (آب، برق، گاز).
+- **توابع مهم:**
+  - `fun isValidBill(billId: String, paymentId: String): Boolean`: اعتبارسنجی شناسه قبض و شناسه پرداخت.
+
+```kotlin
+fun String.isValidCardNumber(): Boolean
+```
+اعتبارسنجی شماره کارت بانکی ۱۶ رقمی با استفاده از الگوریتم Luhn.
+- **خروجی:** `Boolean` معتبر بودن شماره کارت.
+
+```kotlin
+fun String.formatCardNumber(): String
+```
+فرمت کردن رشته فقط رقمی به شکل شماره کارت (چهار رقم چهار رقم با فاصله).
+- **خروجی:** `String` شماره کارت فرمت شده.
+
+```kotlin
+fun String.getBankName(): String?
+```
+دریافت نام بانک بر اساس ۶ رقم اول (BIN) شماره کارت بانکی.
+- **خروجی:** `String?` نام بانک یا `null` اگر شناخته نشد.
+
+```kotlin
+fun String.extractBankOtp(): String?
+```
+استخراج رمز پویا (OTP) ۵، ۶ یا ۷ رقمی از متن پیامک بانکی فارسی.
+- **خروجی:** `String?` رمز یکبار مصرف استخراج شده.
+
+```kotlin
+object ShebaHelper
+```
+ابزاری کمکی برای کار با شماره شبا (IBAN) ایرانی.
+- **توابع مهم:**
+  - `fun getBankNameFromSheba(sheba: String): String`: دریافت نام بانک از روی رشته شبا.
+
+```kotlin
+class CardNumberVisualTransformation : VisualTransformation
+```
+کلاسی برای تبدیل بصری فیلد متنی به فرمت استاندارد شماره کارت (اضافه کردن خط تیره بعد از هر ۴ رقم).
+
+```kotlin
+class PriceVisualTransformation : VisualTransformation
+```
+کلاسی برای تبدیل بصری فیلد قیمت جهت جداسازی ارقام به صورت سه‌تایی با ویرگول (کامای هزارگان).
+
+```kotlin
+class ExpirationDateVisualTransformation : VisualTransformation
+```
+کلاسی برای فرمت کردن ورودی ۴ رقمی به تاریخ انقضای استاندارد کارت (مانند 12/03) با درج اسلش (/).
+
+```kotlin
+@Composable
+fun EasifyBalanceText(
+    balance: Long,
+    modifier: Modifier = Modifier,
+    currency: String = "تومان",
+    initiallyHidden: Boolean = false,
+    useBlurEffect: Boolean = true
+)
+```
+کامپوزبلی برای نمایش موجودی مالی به همراه نماد واحد پول با قابلیت پنهان‌سازی (تار کردن یا جایگزینی با ستاره) با کلیک روی آن.
+- **پارامترها:** `balance` مبلغ موجودی، `currency` واحد پول، `initiallyHidden` مخفی بودن اولیه، `useBlurEffect` استفاده از افکت تاری.
+
+```kotlin
+fun Long.toPriceFormat(currency: String = "تومان"): String
+fun String.toPriceFormat(currency: String = "تومان"): String
+```
+فرمت‌دهی مبلغ (عدد یا رشته متنی) با جداکننده سه‌تایی هزارگان و الصاق واحد پول.
+- **خروجی:** `String` قیمت فرمت شده.
+
+```kotlin
+fun String.toEnglishNumbers(): String
+```
+تبدیل تمام اعداد فارسی و عربی موجود در رشته به اعداد انگلیسی.
+- **خروجی:** `String` شامل ارقام انگلیسی.
+
+```kotlin
+fun String.toPersianNumbers(): String
+```
+تبدیل تمام اعداد انگلیسی موجود در رشته به اعداد فارسی.
+- **خروجی:** `String` شامل ارقام فارسی.
+
+```kotlin
+fun Long.rialToToman(): Long
+```
+تبدیل مبلغ ریال به تومان (تقسیم بر ۱۰).
+- **خروجی:** `Long` مقدار معادل تومان.
+
+```kotlin
+fun Long.tomanToRial(): Long
+```
+تبدیل مبلغ تومان به ریال (ضرب در ۱۰).
+- **خروجی:** `Long` مقدار معادل ریال.
+
+```kotlin
+fun Long.withTax(percent: Int = 9): Long
+```
+افزودن مالیات به مبلغ بر اساس درصد تعیین شده (پیش‌فرض ۹ درصد).
+- **خروجی:** `Long` مبلغ با احتساب مالیات.
+
+```kotlin
+fun Long.applyDiscount(percent: Int): Long
+```
+اعمال درصد تخفیف بر روی مبلغ.
+- **خروجی:** `Long` مبلغ نهایی پس از کسر تخفیف.
+
+```kotlin
+fun String.getMobileOperator(): String?
+```
+تشخیص اپراتور موبایل ایرانی (مانند همراه اول، ایرانسل و غیره) بر اساس پیش‌شماره موبایل.
+- **خروجی:** `String?` نام اپراتور.
+
+```kotlin
+fun String.isValidNationalId(): Boolean
+```
+اعتبارسنجی کد ملی اشخاص حقیقی با استفاده از الگوریتم استاندارد چک‌سام (Checksum).
+- **خروجی:** `Boolean` که معتبر بودن کد ملی را نشان می‌دهد.
+
+```kotlin
+fun Long.toPersianWords(): String
+fun String.toPersianWords(): String
+```
+تبدیل عدد به حروف فارسی (مانند تبدیل ۱۲۳ به "صد و بیست و سه").
+- **خروجی:** `String` معادل حروفی عدد.
+
+```kotlin
+class ShamsiDate(var year: Int, var month: Int, var day: Int)
+```
+کلاس سبُک برای نمایش تاریخ شمسی (جلالی).
+- **پراپرتی‌ها:** `year` سال، `month` ماه، `day` روز.
+
+```kotlin
+fun Long.toShamsiDate(): ShamsiDate
+```
+تبدیل Timestamp یونیکس (بر حسب میلی‌ثانیه) به تاریخ شمسی.
+- **خروجی:** `ShamsiDate` شیء نشان‌دهنده تاریخ شمسی.
+
+```kotlin
+fun String.isValidSheba(): Boolean
+```
+اعتبارسنجی شماره شبا با استفاده از الگوریتم استاندارد جهانی (ISO 7064 Mod 97-10).
+- **خروجی:** `Boolean` معتبر بودن شماره شبا.
+
+```kotlin
+fun String.getShebaBankName(): String?
+```
+تشخیص نام بانک از روی کد سه‌رقمی تعبیه شده در داخل رشته شبا.
+- **خروجی:** `String?` نام بانک یا `null` در صورت عدم شناسایی.

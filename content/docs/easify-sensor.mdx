@@ -1,0 +1,214 @@
+---
+title: easify-sensor
+description: راهنمای استفاده از ماژول easify-sensor
+---
+
+# easify-sensor
+
+این ماژول ابزارهای ساده و کاربردی برای کار با سنسورهای سخت‌افزاری دستگاه (مانند شتاب‌سنج، مجاورت، نور و...) در Jetpack Compose فراهم می‌کند تا بدون درگیری با پیچیدگی‌های `SensorManager` به داده‌های سنسور دسترسی پیدا کنید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-sensor:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### مشاهده داده‌های سنسور با `rememberSensorObserver`
+
+با استفاده از کامپوزبل `rememberSensorObserver` می‌توانید به راحتی به داده‌های یک سنسور خاص دسترسی پیدا کنید. این تابع یک `SensorObserver` برمی‌گرداند که می‌توانید آن را فعال (start) یا غیرفعال (stop) کنید.
+
+**مثال: استفاده از سنسور مجاورت (Proximity Sensor)**
+
+```kotlin
+import android.hardware.Sensor
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import ir.amirhesambandegan.easify_sensor.rememberSensorObserver
+
+@Composable
+fun ProximitySensorScreen() {
+    // ایجاد observer برای سنسور مجاورت
+    val proximityObserver = rememberSensorObserver(sensorType = Sensor.TYPE_PROXIMITY)
+    
+    // دریافت وضعیت فعلی سنسور به صورت State
+    val sensorEvent by proximityObserver.sensorEvent.collectAsState(initial = null)
+
+    DisposableEffect(Unit) {
+        proximityObserver.start() // شروع دریافت داده‌ها
+        onDispose {
+            proximityObserver.stop() // توقف دریافت داده‌ها برای جلوگیری از مصرف باتری
+        }
+    }
+
+    Column {
+        Text("مقدار خام سنسور:")
+        sensorEvent?.let { event ->
+            // تبدیل داده خام به شیء ProximityData
+            val proximityData = event.toProximityData()
+            
+            Text("فاصله: ${proximityData.distance} سانتی‌متر")
+            if (proximityData.isNear) {
+                Text("هشدار: یک شیء نزدیک دستگاه است!")
+            } else {
+                Text("وضعیت عادی (شیء دور است)")
+            }
+        }
+    }
+}
+```
+
+### پشتیبانی از داده‌های چندمحوره (مانند شتاب‌سنج)
+
+برای سنسورهایی که مقادیر X، Y و Z دارند می‌توانید از متد `toThreeAxisData()` استفاده کنید.
+
+```kotlin
+import android.hardware.Sensor
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import ir.amirhesambandegan.easify_sensor.rememberSensorObserver
+
+@Composable
+fun AccelerometerScreen() {
+    val accelerometerObserver = rememberSensorObserver(sensorType = Sensor.TYPE_ACCELEROMETER)
+    val sensorEvent by accelerometerObserver.sensorEvent.collectAsState(initial = null)
+
+    DisposableEffect(Unit) {
+        accelerometerObserver.start()
+        onDispose { accelerometerObserver.stop() }
+    }
+
+    Column {
+        sensorEvent?.let { event ->
+            val data = event.toThreeAxisData()
+            Text("X: ${data.x}")
+            Text("Y: ${data.y}")
+            Text("Z: ${data.z}")
+        }
+    }
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+- **`EasifySensorEvent`**
+```kotlin
+data class EasifySensorEvent(
+    val values: FloatArray,
+    val accuracy: Int,
+    val timestamp: Long
+)
+```
+یک کلاس (Data Class) برای نگهداری اطلاعات سنسور.
+**پارامترها:**
+- `values`: آرایه‌ای از نوع Float شامل مقادیر سنسور.
+- `accuracy`: دقت سنسور.
+- `timestamp`: زمان دریافت رویداد به نانوثانیه.
+
+- **`EasifySensorEvent.toThreeAxisData()`**
+```kotlin
+fun toThreeAxisData(): ThreeAxisData
+```
+مقادیر خام رویداد را به یک کلاس `ThreeAxisData` تبدیل می‌کند که شامل x، y و z است.
+**مقدار بازگشتی:** نمونه‌ای از `ThreeAxisData`.
+
+- **`EasifySensorEvent.toProximityData()`**
+```kotlin
+fun toProximityData(): ProximityData
+```
+مقادیر خام را به کلاس `ProximityData` که مخصوص سنسور مجاورت است، تبدیل می‌کند.
+**مقدار بازگشتی:** نمونه‌ای از `ProximityData`.
+
+- **`EasifySensorEvent.toSingleValueData()`**
+```kotlin
+fun toSingleValueData(): SingleValueData
+```
+مقادیر را برای سنسورهایی که تنها یک مقدار دارند (مانند نور) به `SingleValueData` تبدیل می‌کند.
+**مقدار بازگشتی:** نمونه‌ای از `SingleValueData`.
+
+- **`rememberSensorObserver()`**
+```kotlin
+@Composable
+fun rememberSensorObserver(
+    sensorType: Int,
+    samplingPeriod: Int = SensorManager.SENSOR_DELAY_UI
+): SensorObserver
+```
+یک تابع کامپوزبل برای ساخت و نگهداری شیء `SensorObserver` در کامپوزیشن.
+**پارامترها:**
+- `sensorType`: نوع سنسور سخت‌افزاری.
+- `samplingPeriod`: تاخیر نمونه‌برداری سنسور.
+**مقدار بازگشتی:** نمونه‌ای از `SensorObserver`.
+
+- **`ThreeAxisData`**
+```kotlin
+data class ThreeAxisData(val x: Float, val y: Float, val z: Float)
+```
+کلاسی برای نمایش داده‌های سه محوری.
+**پارامترها:**
+- `x`, `y`, `z`: مقادیر محورها.
+
+- **`ProximityData`**
+```kotlin
+data class ProximityData(val distance: Float, val isNear: Boolean)
+```
+کلاسی برای نمایش داده‌های سنسور مجاورت.
+**پارامترها:**
+- `distance`: فاصله اندازه‌گیری شده.
+- `isNear`: آیا شیء نزدیک دستگاه است یا خیر.
+
+- **`SingleValueData`**
+```kotlin
+data class SingleValueData(val value: Float)
+```
+کلاسی برای داده‌های تک مقداری.
+**پارامترها:**
+- `value`: مقدار تک‌بعدی اندازه‌گیری شده.
+
+- **`SensorObserver`**
+```kotlin
+class SensorObserver(
+    private val context: Context,
+    private val sensorType: Int,
+    private val samplingPeriod: Int = SensorManager.SENSOR_DELAY_UI
+)
+```
+کلاسی برای مشاهده سنسور خاص و دریافت داده‌های آن.
+**پارامترها:**
+- `context`: کانتکست (Context).
+- `sensorType`: نوع سنسور.
+- `samplingPeriod`: تناوب به‌روزرسانی.
+
+- **`SensorObserver.sensorData`**
+```kotlin
+val sensorData: Flow<EasifySensorEvent>
+```
+یک متغیر از نوع Flow که رویدادهای سنسور را منتشر می‌کند.
+
+- **`SensorUtils.hasSensor()`**
+```kotlin
+fun hasSensor(context: Context, sensorType: Int): Boolean
+```
+بررسی می‌کند که آیا دستگاه سنسور مورد نظر را دارد یا خیر.
+**پارامترها:**
+- `context`: کانتکست (Context).
+- `sensorType`: نوع سنسور.
+**مقدار بازگشتی:** Boolean، در صورت وجود سنسور `true` و در غیر این صورت `false`.
+
+- **`SensorUtils.getAllAvailableSensors()`**
+```kotlin
+fun getAllAvailableSensors(context: Context): List<Sensor>
+```
+لیستی از تمام سنسورهای موجود روی دستگاه را برمی‌گرداند.
+**پارامترها:**
+- `context`: کانتکست (Context).
+**مقدار بازگشتی:** لیست از آبجکت‌های `Sensor`.

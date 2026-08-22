@@ -1,0 +1,156 @@
+---
+title: easify-haptic
+description: راهنمای استفاده از ماژول easify-haptic
+---
+
+# easify-haptic
+
+این ماژول مجموعه‌ای از ابزارها برای کنترل و اجرای بازخوردهای لمسی (Haptic Feedback) در اپلیکیشن‌های اندرویدی مبتنی بر Jetpack Compose است. با استفاده از این ماژول می‌توانید تجربه‌ی کاربری بسیار بهتری با ایجاد افکت‌های لرزشی متنوع (از جمله ویبره‌های موفقیت، خطا، کلیک و الگوهای سفارشی) رقم بزنید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-haptic:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### ۱. استفاده از افکت‌های آماده لمسی (Haptic Impacts & Patterns)
+
+ماژول `easify-haptic` شامل توابع راحتی برای اجرای سریع افکت‌های لمسی رایج مانند کلیک و موفقیت است.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_haptic.performClick
+import ir.amirhesambandegan.easify_haptic.performSuccess
+
+@Composable
+fun HapticFeedbackExample() {
+    val context = LocalContext.current
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Button(
+            onClick = { 
+                // اجرای بازخورد لمسی ساده برای کلیک
+                context.performClick() 
+            }
+        ) {
+            Text("بازخورد کلیک")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { 
+                // اجرای بازخورد لمسی مربوط به عملیات موفق
+                context.performSuccess() 
+            }
+        ) {
+            Text("بازخورد موفقیت")
+        }
+    }
+}
+```
+
+### ۲. مدیر مرکزی بازخورد لمسی (EasifyHapticManager)
+
+برای کنترل دقیق‌تر، الگوهای پیچیده‌تر و همگام‌سازی صدا با لمس (Haptic Audio)، می‌توانید مستقیماً از کلاس مدیریت آن استفاده کنید.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_haptic.EasifyHapticManager
+import ir.amirhesambandegan.easify_haptic.HapticPatterns
+
+@Composable
+fun AdvancedHapticExample() {
+    val context = LocalContext.current
+    val hapticManager = remember { EasifyHapticManager(context) }
+
+    Button(
+        onClick = { 
+            // اجرای یک الگوی خاص ویبره
+            hapticManager.playPattern(HapticPatterns.DOUBLE_CLICK)
+        }
+    ) {
+        Text("الگوی دوبار کلیک")
+    }
+}
+```
+
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+```kotlin
+object EasifyHapticManager
+```
+یک شیء سینگلتون برای مدیریت پیکربندی و وضعیت بازخورد لمسی (Haptic) سیستم.
+- **پراپرتی‌ها:**
+  - `var globalIntensity: Float`: تنظیم شدت کلی ویبره (بین 0.0 تا 1.0).
+  - `var isHapticEnabled: Boolean`: فعال یا غیرفعال بودن ویبره در سطح کل اپلیکیشن.
+
+```kotlin
+class AudioHapticPlayer(private val context: Context, private val audioResId: Int)
+```
+کلاسی برای پخش فایل صوتی و تولید همزمان بازخورد لمسی متناسب با آن (مخصوص اندروید 12 به بالا).
+- **توابع:**
+  - `fun play()`: شروع پخش صدا و تولید هپتیک.
+  - `fun release()`: آزادسازی منابع.
+
+```kotlin
+class PullHapticTracker(private val context: Context)
+```
+کلاسی برای ردیابی میزان پیشرفت ژست‌های کشیدنی (مانند Pull to Refresh) و ایجاد ویبره‌های ریز در مقاطع خاص.
+- **توابع:**
+  - `fun onPullProgress(progress: Float)`: بررسی پیشرفت (از 0.0 تا 1.0) و اجرای ویبره.
+  - `fun reset()`: ریست کردن وضعیت.
+
+```kotlin
+object HapticHelper
+```
+مجموعه‌ای از توابع کاربردی برای ارائه بازخوردهای لمسی پرکاربرد.
+- **توابع:**
+  - `fun Context.hapticClick()`: بازخورد لمسی برای کلیک معمولی.
+  - `fun Context.hapticSuccess()`: بازخورد لمسی برای عملیات موفقیت‌آمیز (ویبره دوگانه نرم).
+  - `fun Context.hapticError()`: بازخورد لمسی برای خطا (ویبره سه‌گانه قوی).
+
+```kotlin
+fun Context.hapticImpactLight()
+fun Context.hapticImpactMedium()
+fun Context.hapticImpactHeavy()
+fun Context.hapticTick()
+fun Context.hapticKeypress()
+```
+توابع الحاقی برای تولید انواع بازخوردهای لمسی (Impact) با شدت‌های مختلف (سبک، متوسط، سنگین، تیک و فشار کلید کیبورد).
+
+```kotlin
+fun Modifier.hapticClickable(interactionSource: MutableInteractionSource? = null, onClick: () -> Unit): Modifier
+```
+جایگزینی برای Modifier.clickable استاندارد، که بازخورد لمسی سبک هنگام فشار دادن (Down) و بازخورد متوسط هنگام رها کردن (Up) تولید می‌کند.
+
+```kotlin
+fun Modifier.hapticPressIndicator(): Modifier
+```
+یک Modifier که تنها یک بازخورد لمسی سبک هنگام فشردن ایجاد می‌کند و رفتار پیش‌فرض کلیک را لغو نمی‌کند.
+
+```kotlin
+fun Context.hapticHeartbeat()
+fun Context.hapticWarning()
+fun Context.hapticSOS()
+fun Context.hapticMachineGun()
+```
+توابعی برای تولید الگوهای ویبره خاص مانند ضربان قلب، هشدار، کمک (SOS) با کد مورس و الگوی مسلسل‌وار.
+
+```kotlin
+fun HapticFeedback.performClick()
+```
+تابع الحاقی برای نمونه‌های `HapticFeedback` در Compose، جهت شبیه‌سازی فیدبک معنایی کلیک یا جابجایی دستگیره متن.
+
+```kotlin
+fun HapticFeedback.performSuccess()
+```
+تابع الحاقی برای فیدبک معنایی عملیات موفق یا فشار طولانی.

@@ -1,0 +1,132 @@
+---
+title: easify-format
+description: راهنمای استفاده از ماژول easify-format
+---
+
+# easify-format
+
+این ماژول مجموعه‌ای از توابع کاربردی برای قالب‌بندی (Formatting) اعداد، متن‌ها، مبالغ پولی و زمان ارائه می‌دهد.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-format:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### قالب‌بندی مبالغ و ارز (Currency Formatting)
+به راحتی اعداد را به فرمت استاندارد ارزی تبدیل کنید.
+
+```kotlin
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_format.toCurrency
+
+@Composable
+fun FormatExample() {
+    val price = 1500000.75
+    // خروجی بستگی به Locale دستگاه دارد، مثلا: $1,500,000.75
+    val formattedPrice = price.toCurrency()
+
+    Text(text = "قیمت: $formattedPrice")
+}
+```
+
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+```kotlin
+fun String.highlightMatch(query: String, highlightColor: Color = Color.Yellow, fontWeight: FontWeight = FontWeight.Bold): AnnotatedString
+```
+برجسته‌سازی تمامی رخدادهای یک عبارت (`query`) در داخل یک رشته متنی و بازگرداندن یک `AnnotatedString` (مناسب برای Jetpack Compose).
+- **پارامترها:** `query` عبارت جستجو، `highlightColor` رنگ برجسته‌سازی، `fontWeight` وزن فونت.
+
+```kotlin
+fun String.toLinkifiedAnnotatedString(linkColor: Color = Color.Blue): AnnotatedString
+```
+تبدیل یک رشته متنی به `AnnotatedString` به طوری که لینک‌ها، ایمیل‌ها و منشن‌ها (با @) قابل کلیک و دارای رنگ مشخص باشند.
+- **پارامترها:** `linkColor` رنگ لینک‌ها.
+
+```kotlin
+fun Long.toCompactFormat(): String
+```
+فرمت کردن اعداد بزرگ به شکل خلاصه و خوانا (مثلاً 1.2K یا 3.5M).
+- **خروجی:** یک رشته کوتاه از عدد.
+
+```kotlin
+fun Int.toOrdinal(language: String = "en"): String
+```
+تبدیل یک عدد صحیح به فرمت ترتیبی (Ordinal) مانند "1st, 2nd, 3rd" در انگلیسی یا "اول، دوم، سوم" در فارسی.
+- **پارامترها:** `language` زبان مورد نظر (مقادیر "en" یا "fa").
+
+```kotlin
+fun String.toTitleCase(): String
+```
+تبدیل یک رشته به Title Case، به طوری که حرف اول هر کلمه بزرگ (Capital) شود.
+
+```kotlin
+fun String.toCamelCase(): String
+```
+تبدیل یک رشته به camelCase (حذف فاصله‌ها و بزرگ کردن حرف اول کلمات بعدی).
+
+```kotlin
+fun String.toSnakeCase(): String
+```
+تبدیل یک رشته به snake_case (استفاده از خط زیرین _ به جای فاصله).
+
+```kotlin
+fun String.toSlug(): String
+```
+تبدیل یک رشته به قالب مناسب URL (اصطلاحاً Slug) با جایگزینی کاراکترهای غیرمجاز با خط تیره (-).
+
+```kotlin
+fun String.stripHtmlTags(): String
+```
+حذف تمامی تگ‌های HTML از داخل یک رشته و بازگرداندن متن ساده (Plain Text).
+
+```kotlin
+fun String.toInitials(): String
+```
+استخراج حروف اول (Initials) از یک رشته. برای کلمات تکی دو حرف اول، و برای کلمات چندتایی حرف اول اولین و آخرین کلمه را برمی‌گرداند.
+
+```kotlin
+fun String.maskEmail(): String
+```
+ماسک کردن (پنهان‌سازی جزئی) یک آدرس ایمیل با جایگزینی بخشی از نام با ستاره (مثلاً joh***@example.com).
+
+```kotlin
+fun String.maskPhone(): String
+```
+ماسک کردن یک شماره تلفن با نمایش دادن 4 رقم اول و 4 رقم آخر و جایگزینی ارقام میانی با ستاره.
+
+```kotlin
+fun String.maskCard(): String
+```
+ماسک کردن شماره کارت 16 رقمی با نمایش دادن 4 رقم اول و 4 رقم آخر.
+
+```kotlin
+fun String.similarityPercentage(other: String): Double
+```
+محاسبه درصد شباهت دو رشته بر اساس الگوریتم فاصله لون‌اشتاین (Levenshtein Distance).
+- **خروجی:** مقداری بین 0.0 تا 100.0 به عنوان درصد شباهت.
+
+```kotlin
+fun Long.toTimeAgo(): String
+```
+تبدیل Timestamp (بر حسب میلی‌ثانیه) به یک عبارت زمان گذشته خوانا در زبان فارسی (مانند "لحظاتی پیش"، "دیروز"، "۲ روز پیش").
+
+```kotlin
+fun Long.toTimerFormat(): String
+```
+تبدیل مدت زمان (بر حسب ثانیه) به فرمت استاندارد تایمر (MM:SS یا HH:MM:SS).
+
+```kotlin
+fun Number.toCurrency(locale: Locale = Locale.getDefault()): String
+```
+فرمت‌دهی یک عدد به عنوان واحد پولی بر اساس موقعیت مکانی (Locale) مشخص شده.
+
+```kotlin
+fun Long.toTimeString(): String
+```
+تبدیل مدت زمان (بر حسب میلی‌ثانیه) به فرمت رشته‌ای زمان (mm:ss یا HH:mm:ss).

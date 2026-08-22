@@ -1,0 +1,224 @@
+---
+title: easify-location
+description: راهنمای استفاده از ماژول easify-location
+---
+
+# easify-location
+
+این ماژول مجموعه‌ای کامل برای کار با موقعیت مکانی است. ردیابی مکان با بالاترین دقت، محاسبه مسافت و سرعت، ژئوفنسینگ (Geofencing)، تبدیل مختصات به آدرس (SmartGeocoder)، و حتی جلوگیری از مختصات‌های جعلی (AntiFakeGps) همگی در این پکیج قرار دارند.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-location:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### ۱. ردیابی پیوسته موقعیت مکانی (LocationTracker)
+
+یکی از پایه‌ای‌ترین نیازها، دریافت مستمر طول و عرض جغرافیایی کاربر با رعایت مصرف بهینه باتری است. این ماژول این کار را بسیار ساده می‌کند.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_location.LocationTracker
+
+@Composable
+fun MapScreen() {
+    val context = LocalContext.current
+    val locationTracker = remember { LocationTracker(context) }
+    
+    // موقعیت مکانی را به صورت یک Flow دریافت و در استیت نگهداری می‌کنیم
+    val currentLocation by locationTracker.locationFlow.collectAsState(initial = null)
+
+    LaunchedEffect(Unit) {
+        // شروع به ردیابی موقعیت مکانی
+        locationTracker.startTracking()
+    }
+
+    if (currentLocation != null) {
+        Text("عرض جغرافیایی: ${currentLocation?.latitude}")
+        Text("طول جغرافیایی: ${currentLocation?.longitude}")
+    } else {
+        Text("در حال یافتن موقعیت...")
+    }
+}
+```
+
+### ۲. فیلتر پرش‌های مکانی (AntiJumpFilter) و لوکیشن جعلی (AntiFakeGps)
+
+برای اپلیکیشن‌های ناوگان (Fleet Management) یا اسنپ/تپسی، نیاز است موقعیت‌های غیرمنطقی که به خاطر خطای GPS پدید می‌آیند را حذف کنید.
+
+```kotlin
+import ir.amirhesambandegan.easify_location.AntiJumpFilter
+import ir.amirhesambandegan.easify_location.AntiFakeGps
+
+fun processLocation(location: Location) {
+    // بررسی اینکه آیا کاربر از نرم‌افزارهای Fake GPS استفاده می‌کند یا خیر
+    if (AntiFakeGps.isFakeLocation(location)) {
+        showError("لطفا Fake GPS را خاموش کنید")
+        return
+    }
+
+    // فیلتر کردن پرش‌های ناگهانی GPS
+    val validLocation = AntiJumpFilter.filter(location)
+    if (validLocation != null) {
+        updateMapLocation(validLocation)
+    }
+}
+```
+
+### ۳. تبدیل مختصات به آدرس با SmartGeocoder
+
+این ابزار برای زمانی که می‌خواهید طول و عرض جغرافیایی را به یک آدرس متنی (کوچه، خیابان، شهر) تبدیل کنید استفاده می‌شود.
+
+```kotlin
+import ir.amirhesambandegan.easify_location.SmartGeocoder
+import kotlinx.coroutines.launch
+
+// داخل یک CoroutineScope
+coroutineScope.launch {
+    val geocoder = SmartGeocoder(context)
+    val address = geocoder.getAddressFromLocation(lat = 35.6892, lng = 51.3890)
+    
+    println("کاربر در آدرس: ${address?.fullAddress} قرار دارد.")
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+### کلاس `AntiFakeGps`
+```kotlin
+fun Location.isMocked(): Boolean
+```
+بررسی می‌کند که آیا مکان فعلی توسط نرم‌افزارهای جعل موقعیت (Fake GPS) ایجاد شده است یا خیر. با پشتیبانی از تمامی نسخه‌های اندروید.
+* **پارامترها:** شیء دریافت‌کننده (Receiver) `Location`
+* **خروجی:** یک مقدار بولی که در صورت جعلی بودن مکان `true` است.
+
+### توابع `AntiJumpFilter`
+```kotlin
+fun Flow<Location?>.filterJumps(maxSpeedKmh: Float = 200f): Flow<Location?>
+```
+برای حذف موقعیت‌های غیرمنطقی که نشان‌دهنده پرش‌های ناگهانی یا سرعت‌های غیرممکن هستند استفاده می‌شود.
+* **پارامترها:** `maxSpeedKmh`: حداکثر سرعت معقول به کیلومتر بر ساعت (پیش‌فرض 200f).
+* **خروجی:** یک `Flow` جدید که موقعیت‌های نامعتبر از آن فیلتر شده‌اند.
+
+### توابع `CoordinateFormatter`
+```kotlin
+fun Location.toGoogleMapsLink(): String
+```
+تولید یک لینک آماده اشتراک‌گذاری برای جستجوی مختصات در گوگل مپ.
+* **خروجی:** رشته‌ای حاوی لینک جستجوی گوگل مپ.
+
+```kotlin
+fun Location.toDMSFormat(): String
+```
+تبدیل مختصات اعشاری به فرمت درجه، دقیقه و ثانیه (DMS) به همراه جهات جغرافیایی. (مثلا `35° 43' 12" N, 51° 24' 36" E`)
+* **خروجی:** رشته فرمت‌شده مشخصات جغرافیایی.
+
+### توابع `GeofencingEngine`
+```kotlin
+@Composable
+fun rememberGeofenceState(
+    currentLocation: Location?,
+    centerLat: Double,
+    centerLng: Double,
+    radiusMeters: Float
+): State<Boolean>
+```
+به صورت ری‌اکتیو بررسی می‌کند که آیا موقعیت فعلی درون یک حصار جغرافیایی (دایره‌ای به مرکز و شعاع مشخص) قرار دارد یا خیر.
+* **پارامترها:**
+  * `currentLocation`: موقعیت زنده کاربر
+  * `centerLat` و `centerLng`: عرض و طول جغرافیایی مرکز حصار
+  * `radiusMeters`: شعاع دایره بر حسب متر
+* **خروجی:** استیتی (`State`) حاوی `true` در صورت حضور در محدوده و در غیر این صورت `false`.
+
+### کلاس و توابع `GpsEnabler`
+```kotlin
+class GpsEnabler(
+    private val context: Context,
+    private val launchResolution: (IntentSenderRequest) -> Unit
+) {
+    fun requestGps(onResult: (Boolean) -> Unit = {})
+}
+```
+ابزاری برای بررسی وضعیت روشن بودن GPS دستگاه. در صورت خاموش بودن، با استفاده از قابلیت‌های گوگل پلی سرویس، دیالوگ درخواست روشن کردن آن را به کاربر نمایش می‌دهد.
+* **پارامترها:** کالبک `onResult` که موفقیت‌آمیز بودن یا نبودن فعال‌سازی GPS را برمی‌گرداند.
+
+```kotlin
+@Composable
+fun rememberGpsEnabler(onResult: (Boolean) -> Unit): GpsEnabler
+```
+تابع کامپوزی برای ایجاد و نگهداری یک نمونه از کلاس `GpsEnabler` در محیط Jetpack Compose.
+
+### کلاس `LocationMath`
+```kotlin
+object LocationMath {
+    fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Float
+}
+```
+ماژولی شامل ابزارهای محاسبات ریاضی مربوط به موقعیت جغرافیایی.
+* **تابع `calculateDistance`:** فاصله میان دو نقطه جغرافیایی را با استفاده از فرمول تخصصی Haversine محاسبه می‌کند.
+* **پارامترها:** طول و عرض جغرافیایی دو نقطه مبدا و مقصد.
+* **خروجی:** فاصله دقیق بین دو نقطه بر حسب متر.
+
+### کلاس و توابع `LocationTracker`
+```kotlin
+class LocationTracker(context: Context) {
+    fun getLocationUpdates(interval: Long = 10000L): Flow<Location?>
+}
+```
+ابزاری ری‌اکتیو (Reactive) مبتنی بر سرویس لوکیشن گوگل (FusedLocationProviderClient) برای دریافت دوره‌ای و پیوسته مکان کاربر.
+* **پارامترها:** `interval` (بازه به‌روزرسانی برحسب میلی‌ثانیه).
+* **خروجی:** یک `Flow` که موقعیت‌های مکانی کاربر را ساطع می‌کند.
+
+```kotlin
+class LocationLauncherState(
+    val tracker: LocationTracker,
+    var permissionRequested: Boolean
+)
+```
+کلاسی برای نگهداری وضعیت درخواست مجوز مکان‌یابی و نمونه ردیاب مکان.
+
+```kotlin
+@Composable
+fun rememberLocationTracker(): LocationLauncherState
+```
+مدیریت ردیاب موقعیت و چرخه حیات درخواست مجوزهای مکانی در Jetpack Compose را بر عهده دارد و در صورت عدم وجود مجوز دسترسی، فرآیند درخواست آن را شروع می‌کند.
+
+### توابع `SmartGeocoder`
+```kotlin
+suspend fun Location.toAddress(context: Context, locale: Locale = Locale.getDefault()): Address?
+```
+تبدیل موقعیت مکانی جغرافیایی (طول و عرض جغرافیایی) به آدرس متنی به روش Async.
+* **پارامترها:** کانتکست برنامه و منطقه زبانی (Locale).
+* **خروجی:** یک شیء `Address` و در صورت عدم موفقیت `null`.
+
+```kotlin
+fun Address.toFormattedString(): String
+```
+فرمت‌بندی تمام قسمت‌های یک آدرس یافت شده به شکل یک رشته متنی پیوسته که با کاما از هم جدا شده‌اند.
+
+```kotlin
+suspend fun Geocoder.getCoordinates(addressName: String): Location?
+```
+یافتن موقعیت مکانی (طول و عرض جغرافیایی) برای یک آدرس متنی مشخص با استفاده از `Geocoder`.
+
+### توابع `SpeedAndETA`
+```kotlin
+fun Location.getSpeedKmh(): Float
+```
+محاسبه سرعت حرکت کاربر به کیلومتر بر ساعت.
+* **خروجی:** سرعت به صورت Float. اگر اطلاعات سرعت در دسترس نباشد مقدار `0f` برمی‌گرداند.
+
+```kotlin
+fun Location.calculateETA(destinationLat: Double, destinationLng: Double): Int?
+```
+تخمین زمان رسیدن کاربر به یک مقصد معین (ETA) با استفاده از سرعت فعلی و محاسبه مسافت در خط مستقیم.
+* **پارامترها:** عرض و طول جغرافیایی نقطه مقصد.
+* **خروجی:** زمان باقی‌مانده تخمینی بر حسب دقیقه. اگر سرعت حرکت بسیار کم (کمتر از ۵ کیلومتر بر ساعت) باشد مقدار `null` برمی‌گرداند.

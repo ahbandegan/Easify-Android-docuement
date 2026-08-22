@@ -1,0 +1,392 @@
+---
+title: easify-storage
+description: راهنمای استفاده از ماژول easify-storage
+---
+
+# easify-storage
+
+این ماژول ابزارهای قدرتمندی برای مدیریت حافظه و ذخیره‌سازی داده‌ها به صورت امن و غیرامن در اختیار شما قرار می‌دهد. از ذخیره‌سازی فایل‌های رمزنگاری شده گرفته تا کار با Jetpack DataStore به ساده‌ترین شکل ممکن.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-storage:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### ذخیره‌سازی امن با `DataStoreController`
+
+کلاس `DataStoreController` یک رابط کاربری ساده برای خواندن، نوشتن و مشاهده ترجیحات (Preferences) در Jetpack DataStore فراهم می‌کند که از رمزنگاری نیز پشتیبانی می‌کند.
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import androidx.datastore.preferences.core.stringPreferencesKey
+import ir.amirhesambandegan.easify_storage.DataStoreController
+import kotlinx.coroutines.launch
+
+@Composable
+fun DataStoreExampleScreen() {
+    val context = LocalContext.current
+    val dataStoreController = remember { DataStoreController(context) }
+    val coroutineScope = rememberCoroutineScope()
+    
+    // تعریف یک کلید
+    val tokenKey = stringPreferencesKey("user_token")
+    
+    // مشاهده داده به صورت واکنشی (Reactive) و امن
+    val token by dataStoreController.observeSecure(tokenKey).collectAsState(initial = null)
+
+    Column {
+        Text("توکن فعلی: ${token ?: "موجود نیست"}")
+
+        Button(onClick = {
+            coroutineScope.launch {
+                // ذخیره‌سازی امن مقدار به صورت رمزنگاری شده
+                dataStoreController.saveSecure(tokenKey, "MySuperSecretToken123")
+            }
+        }) {
+            Text("ذخیره توکن امن")
+        }
+
+        Button(onClick = {
+            coroutineScope.launch {
+                dataStoreController.remove(tokenKey)
+            }
+        }) {
+            Text("حذف توکن")
+        }
+    }
+}
+```
+
+### کار با فایل‌های رمزنگاری شده (`SecureFileStorage`)
+
+اگر نیاز دارید فایل‌هایی را در حافظه دستگاه ذخیره کنید و از امنیت محتوای آن‌ها مطمئن باشید، می‌توانید از `SecureFileStorage` استفاده کنید. این ابزار از Jetpack Security Crypto استفاده می‌کند.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_storage.SecureFileStorage
+import java.io.File
+
+@Composable
+fun SecureFileExample() {
+    val context = LocalContext.current
+    val secureFile = File(context.filesDir, "secret_data.txt")
+    val content = remember { mutableStateOf("") }
+
+    Column {
+        Text("محتوای فایل: ${content.value}")
+
+        Button(onClick = {
+            // نوشتن امن و رمزنگاری شده در فایل
+            SecureFileStorage.writeSecureString(context, secureFile, "این یک پیام کاملاً محرمانه است!")
+        }) {
+            Text("نوشتن در فایل امن")
+        }
+
+        Button(onClick = {
+            if (secureFile.exists()) {
+                // خواندن و رمزگشایی فایل
+                content.value = SecureFileStorage.readSecureString(context, secureFile)
+            }
+        }) {
+            Text("خواندن از فایل امن")
+        }
+    }
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+### AppStorageMonitor
+```kotlin
+object AppStorageMonitor
+```
+یک شیء کمکی برای مانیتور و مدیریت حافظه و کش اپلیکیشن.
+
+```kotlin
+fun getAppCacheSize(context: Context): Long
+```
+حجم کل دایرکتوری‌های کش داخلی و خارجی اپلیکیشن را محاسبه می‌کند.
+- **پارامترها:** `context: Context` (کانتکست اپلیکیشن برای دسترسی به دایرکتوری‌های کش)
+- **مقدار بازگشتی:** `Long` (حجم کل دایرکتوری‌های کش بر حسب بایت)
+
+```kotlin
+fun clearAppCache(context: Context)
+```
+دایرکتوری‌های کش داخلی و خارجی اپلیکیشن را به طور کامل پاک می‌کند.
+- **پارامترها:** `context: Context` (کانتکست اپلیکیشن برای دسترسی به دایرکتوری‌های کش)
+- **مقدار بازگشتی:** ندارد (Unit)
+
+### BackupEngine
+```kotlin
+object BackupEngine
+```
+شیئی که وظیفه بک‌آپ‌گیری و استخراج داده‌های محلی اپلیکیشن را بر عهده دارد.
+
+```kotlin
+fun exportAppBackup(context: Context, outputFile: File): Boolean
+```
+یک آرشیو استاندارد زیپ حاوی دیتابیس‌ها، DataStore و SharedPreferences اپلیکیشن ایجاد می‌کند.
+- **پارامترها:**
+  - `context: Context`: کانتکست اپلیکیشن
+  - `outputFile: File`: فایل مقصدی که فایل بک‌آپ zip در آن ذخیره می‌شود
+- **مقدار بازگشتی:** `Boolean` (در صورت موفقیت آمیز بودن true و در صورت بروز خطا false برمی‌گرداند)
+
+### BaseDao
+```kotlin
+@Dao
+interface BaseDao<T>
+```
+یک رابط پایه (Base DAO) برای دیتابیس Room جهت کاهش کدهای تکراری (Boilerplate).
+- **پارامترها:** `<T>` نوع انتیتی که توسط این DAO مدیریت می‌شود.
+
+```kotlin
+@Insert(onConflict = OnConflictStrategy.REPLACE)
+suspend fun insert(entity: T): Long
+```
+یک انتیتی را در دیتابیس وارد می‌کند و اگر قبلا وجود داشته باشد، آن را جایگزین می‌کند.
+- **پارامترها:** `entity: T`
+- **مقدار بازگشتی:** `Long` (شناسه سطر اضافه شده)
+
+```kotlin
+@Insert(onConflict = OnConflictStrategy.REPLACE)
+suspend fun insertAll(vararg entity: T)
+```
+چندین انتیتی را در دیتابیس وارد یا جایگزین می‌کند.
+- **پارامترها:** `vararg entity: T`
+- **مقدار بازگشتی:** ندارد
+
+```kotlin
+@Insert(onConflict = OnConflictStrategy.REPLACE)
+suspend fun insertAll(entities: List<T>)
+```
+لیستی از انتیتی‌ها را در دیتابیس وارد یا جایگزین می‌کند.
+- **پارامترها:** `entities: List<T>`
+- **مقدار بازگشتی:** ندارد
+
+```kotlin
+@Update
+suspend fun update(entity: T)
+```
+یک انتیتی موجود را بروزرسانی می‌کند.
+- **پارامترها:** `entity: T`
+- **مقدار بازگشتی:** ندارد
+
+```kotlin
+@Update
+suspend fun updateAll(vararg entity: T)
+```
+چندین انتیتی موجود را بروزرسانی می‌کند.
+- **پارامترها:** `vararg entity: T`
+- **مقدار بازگشتی:** ندارد
+
+```kotlin
+@Delete
+suspend fun delete(entity: T)
+```
+یک انتیتی خاص را از دیتابیس حذف می‌کند.
+- **پارامترها:** `entity: T`
+- **مقدار بازگشتی:** ندارد
+
+### DataStoreController
+```kotlin
+class DataStoreController(context: Context)
+```
+کلاسی برای کنترل واکنشی و امن Jetpack Preferences DataStore.
+- **پارامترها:** `context: Context`
+
+```kotlin
+suspend fun <T> update(key: Preferences.Key<T>, value: T): Boolean
+```
+مقدار متصل به کلید داده شده را بروزرسانی می‌کند.
+- **پارامترها:** `key` و `value`
+- **مقدار بازگشتی:** `Boolean` (موفقیت یا شکست)
+
+```kotlin
+suspend fun <T> get(key: Preferences.Key<T>): T?
+```
+مقدار فعلی کلید داده شده را یک‌بار دریافت می‌کند.
+- **پارامترها:** `key`
+- **مقدار بازگشتی:** `T?` (مقدار ذخیره شده یا null)
+
+```kotlin
+fun <T> observe(key: Preferences.Key<T>): Flow<T?>
+```
+جریانی (Flow) برمی‌گرداند که مقادیر جدید کلید را با هر تغییر منتشر می‌کند.
+- **پارامترها:** `key`
+- **مقدار بازگشتی:** `Flow<T?>`
+
+```kotlin
+suspend fun <T> remove(key: Preferences.Key<T>)
+```
+مقدار مرتبط با کلید را از DataStore حذف می‌کند.
+- **پارامترها:** `key`
+- **مقدار بازگشتی:** ندارد
+
+```kotlin
+suspend fun clear()
+```
+تمام تنظیمات ذخیره شده در این DataStore را پاک می‌کند.
+- **پارامترها:** ندارد
+- **مقدار بازگشتی:** ندارد
+
+```kotlin
+suspend fun saveSecure(key: Preferences.Key<String>, value: String): Boolean
+```
+یک رشته را رمزنگاری کرده و به صورت امن در DataStore ذخیره می‌کند.
+- **پارامترها:** `key` و `value` (رشته متنی)
+- **مقدار بازگشتی:** `Boolean`
+
+```kotlin
+suspend fun getSecure(key: Preferences.Key<String>): String?
+```
+رشته رمزنگاری شده را از DataStore دریافت و رمزگشایی می‌کند.
+- **پارامترها:** `key`
+- **مقدار بازگشتی:** `String?` (رشته رمزگشایی شده یا null)
+
+```kotlin
+fun observeSecure(key: Preferences.Key<String>): Flow<String?>
+```
+یک جریان از مقادیر رمزگشایی شده را برای یک کلید برمی‌گرداند.
+- **پارامترها:** `key`
+- **مقدار بازگشتی:** `Flow<String?>`
+
+### FileAnalyzer
+```kotlin
+object FileAnalyzer
+```
+شیء کمکی برای تحلیل فایل‌ها، مانند محاسبه حجم و هش فایل.
+
+```kotlin
+fun formatFileSize(sizeInBytes: Long): String
+```
+حجم فایل را به صورت رشته‌ای خوانا (مثل 1.50 MB) در می‌آورد.
+- **پارامترها:** `sizeInBytes: Long`
+- **مقدار بازگشتی:** `String`
+
+```kotlin
+fun getFileChecksum(file: File, algorithm: String = "SHA-256"): String?
+```
+هش (Checksum) رمزنگاری شده فایل را محاسبه می‌کند.
+- **پارامترها:** `file: File`، `algorithm: String`
+- **مقدار بازگشتی:** `String?` (رشته هش شده یا null در صورت خطا)
+
+### PreferenceKeys
+```kotlin
+object PreferenceKeys
+```
+شیء کمکی برای ساختن سریع کلیدهای DataStore.
+
+```kotlin
+fun stringKey(name: String): Preferences.Key<String>
+fun intKey(name: String): Preferences.Key<Int>
+fun booleanKey(name: String): Preferences.Key<Boolean>
+fun floatKey(name: String): Preferences.Key<Float>
+fun longKey(name: String): Preferences.Key<Long>
+fun doubleKey(name: String): Preferences.Key<Double>
+fun stringSetKey(name: String): Preferences.Key<Set<String>>
+```
+کلیدهایی متناسب با نوع داده برای ذخیره در DataStore ایجاد می‌کند.
+- **پارامترها:** `name: String`
+- **مقدار بازگشتی:** کلید متناظر از نوع `Preferences.Key`
+
+### ScopedStorageMaster
+```kotlin
+fun Context.saveImageToGallery(bitmap: Bitmap, filename: String, mimeType: String = "image/jpeg"): Boolean
+```
+یک تصویر را با استفاده از Scoped Storage در گالری دستگاه کاربر ذخیره می‌کند.
+- **پارامترها:** `bitmap: Bitmap`، `filename: String`، `mimeType: String`
+- **مقدار بازگشتی:** `Boolean` (موفقیت یا شکست در ذخیره‌سازی)
+
+### SecureFileStorage
+```kotlin
+object SecureFileStorage
+```
+شیء کمکی برای خواندن و نوشتن امن فایل‌ها توسط کتابخانه Crypto.
+
+```kotlin
+fun getEncryptedFile(context: Context, file: File): EncryptedFile
+```
+یک نمونه EncryptedFile با الگوریتم AES256 GCM برای فایل داده شده ایجاد می‌کند.
+- **پارامترها:** `context: Context`، `file: File`
+- **مقدار بازگشتی:** `EncryptedFile`
+
+```kotlin
+fun writeSecureString(context: Context, file: File, content: String)
+```
+یک رشته را رمزنگاری کرده و درون فایل ذخیره می‌کند.
+- **پارامترها:** `context`، `file`، `content`
+- **مقدار بازگشتی:** ندارد
+
+```kotlin
+fun readSecureString(context: Context, file: File): String
+```
+فایل رمزنگاری شده را خوانده و رمزگشایی می‌کند.
+- **پارامترها:** `context`، `file`
+- **مقدار بازگشتی:** `String`
+
+### SecureObjectMapper
+```kotlin
+suspend inline fun <reified T> DataStoreController.saveObjectSecure(key: Preferences.Key<String>, value: T): Boolean
+```
+یک شیء پیچیده را با استفاده از Gson به جیسون تبدیل کرده و به صورت رمزنگاری شده ذخیره می‌کند.
+- **پارامترها:** `key`، `value`
+- **مقدار بازگشتی:** `Boolean`
+
+```kotlin
+suspend inline fun <reified T> DataStoreController.getObjectSecure(key: Preferences.Key<String>): T?
+```
+شیء پیچیده رمزنگاری شده را می‌خواند و با Gson آن را رمزگشایی و دیسریالایز می‌کند.
+- **پارامترها:** `key`
+- **مقدار بازگشتی:** `T?`
+
+### SmartCacheManager
+```kotlin
+object SmartCacheManager
+```
+شیء کمکی برای ذخیره موقت داده‌ها با استفاده از مکانیزم تاریخ انقضا (TTL).
+
+```kotlin
+fun saveWithTTL(context: Context, key: String, data: String, ttlMillis: Long)
+```
+داده متنی را با یک زمان انقضا مشخص ذخیره می‌کند.
+- **پارامترها:** `context`، `key`، `data`، `ttlMillis`
+- **مقدار بازگشتی:** ندارد
+
+```kotlin
+fun getOrNull(context: Context, key: String): String?
+```
+داده موقت را بازیابی می‌کند، اگر منقضی شده باشد آن را حذف و null برمی‌گرداند.
+- **پارامترها:** `context`، `key`
+- **مقدار بازگشتی:** `String?`
+
+```kotlin
+fun cleanExpiredCaches(context: Context)
+```
+تمام فایل‌های کشی که از زمان انقضایشان گذشته است را پاک می‌کند.
+- **پارامترها:** `context`
+- **مقدار بازگشتی:** ندارد
+
+### dataStore
+```kotlin
+val Context.dataStore: DataStore<Preferences>
+```
+یک property کمکی و تنبل (lazy) برای دسترسی به نمونه سینگلتون از DataStore.
+- **توضیحات:** در سطح فایل و مختص به کانتکست اپلیکیشن تعریف شده است.
+- **مقدار بازگشتی:** `DataStore<Preferences>`

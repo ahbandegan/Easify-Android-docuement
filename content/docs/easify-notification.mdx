@@ -1,0 +1,170 @@
+---
+title: easify-notification
+description: راهنمای استفاده از ماژول easify-notification
+---
+
+# easify-notification
+
+این ماژول برای ساده‌سازی فرآیند ساخت و نمایش انواع نوتیفیکیشن‌ها در اندروید طراحی شده است و به شما کمک می‌کند بدون درگیری با پیچیدگی‌های `NotificationManager` و ساخت کانال‌های نوتیفیکیشن، به راحتی به کاربران خود پیام ارسال کنید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-notification:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### نمایش یک نوتیفیکیشن ساده (Simple Notification)
+کلاس `NotificationHelper` به شما کمک می‌کند که به سادگی یک نوتیفیکیشن ارسال کنید. این کلاس به صورت خودکار کانال‌های مورد نیاز را برای اندروید ۸ (API 26) و بالاتر ایجاد می‌کند.
+
+**مثال استفاده در Jetpack Compose:**
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_notification.NotificationHelper
+
+@Composable
+fun SimpleNotificationScreen() {
+    val context = LocalContext.current
+
+    Button(onClick = {
+        NotificationHelper.showNotification(
+            context = context,
+            channelId = "default_channel",
+            channelName = "کانال عمومی",
+            title = "پیام جدید!",
+            message = "شما یک پیام خوانده نشده دارید.",
+            smallIcon = android.R.drawable.ic_dialog_info,
+            notificationId = 1001
+        )
+    }) {
+        Text("نمایش نوتیفیکیشن")
+    }
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+### ActionButtonsNotification
+
+```kotlin
+data class NotificationAction(val iconRes: Int, val title: String, val pendingIntent: PendingIntent)
+```
+کلاس داده‌ای برای پیکربندی دکمه‌های عملیاتی نوتیفیکیشن که شامل آیکون، عنوان و `PendingIntent` است.
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, title: String, message: String, iconRes: Int, actions: List<NotificationAction>)
+```
+نمایش یک نوتیفیکیشن همراه با دکمه‌های تعاملی مشخص شده.
+
+### BigStyleNotification
+
+```kotlin
+fun showBigText(context: Context, channelId: String, notificationId: Int, title: String, shortMessage: String, longMessage: String, iconRes: Int)
+```
+نمایش یک نوتیفیکیشن با قابلیت باز شدن و نمایش متن طولانی (BigText).
+
+```kotlin
+fun showBigPicture(context: Context, channelId: String, notificationId: Int, title: String, message: String, bitmap: Bitmap, iconRes: Int)
+```
+نمایش یک نوتیفیکیشن حاوی یک تصویر بزرگ (BigPicture).
+
+### ChannelManager
+
+```kotlin
+fun createGroup(context: Context, groupId: String, groupName: String)
+```
+ایجاد یک گروه کانال نوتیفیکیشن برای دسته‌بندی بهتر کانال‌ها در تنظیمات سیستم اندروید.
+
+```kotlin
+fun createChannel(context: Context, channelId: String, channelName: String, importance: Int = NotificationManager.IMPORTANCE_DEFAULT, description: String? = null, groupId: String? = null, soundUri: Uri? = null, enableLights: Boolean = true, lightColor: Int = Color.BLUE, enableVibration: Boolean = true, vibrationPattern: LongArray = longArrayOf(0, 250, 250, 250))
+```
+ایجاد یک کانال نوتیفیکیشن با تنظیمات و ویژگی‌های سفارشی نظیر اهمیت، صدا، چراغ نوتیفیکیشن و الگوی ویبره.
+
+### DirectReplyNotification
+
+```kotlin
+const val KEY_TEXT_REPLY = "key_text_reply"
+```
+کلیدی که در `Intent` برای دریافت متن وارد شده توسط کاربر در پاسخ مستقیم استفاده می‌شود.
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, title: String, message: String, iconRes: Int, replyActionTitle: String = "Reply", intentClass: Class<*>)
+```
+نمایش یک نوتیفیکیشن که به کاربر اجازه می‌دهد مستقیماً از داخل خود نوتیفیکیشن پاسخ متنی تایپ و ارسال کند.
+
+### GroupedNotification
+
+```kotlin
+fun show(context: Context, channelId: String, notificationId: Int, groupId: String, title: String, message: String, iconRes: Int, isGroupSummary: Boolean = false, summaryText: String = "")
+```
+نمایش نوتیفیکیشن‌های دسته‌بندی شده (گروهی) یا یک نوتیفیکیشن به عنوان خلاصه گروه.
+
+### InAppBanner
+
+```kotlin
+@Composable fun InAppBanner(isVisible: Boolean, title: String, message: String, onDismiss: () -> Unit)
+```
+کامپوننت Jetpack Compose برای نمایش یک بنر داخلی برنامه که از بالا ظاهر شده و پس از چند ثانیه پنهان می‌شود.
+
+### NotificationHelper
+
+```kotlin
+fun showNotification(context: Context, channelId: String, channelName: String, title: String, message: String, smallIcon: Int, notificationId: Int = 1001)
+```
+یک ابزار ساده برای نمایش نوتیفیکیشن متنی و ایجاد خودکار کانال آن در صورت نیاز.
+
+### NotificationPermission
+
+```kotlin
+@Composable fun rememberNotificationPermission(): NotificationPermissionState
+```
+دریافت، کنترل و مدیریت وضعیت مجوز نمایش نوتیفیکیشن‌ها در اندروید ۱۳ و بالاتر با استفاده از Jetpack Compose.
+
+```kotlin
+class NotificationPermissionState(val isGranted: Boolean, val requestPermission: () -> Unit, val openSettings: () -> Unit)
+```
+کلاسی برای نگهداری وضعیت مجوز فعلی، تابعی برای درخواست مجوز و تابعی برای هدایت کاربر به صفحه تنظیمات نوتیفیکیشن برنامه.
+
+### ProgressNotification
+
+```kotlin
+class ProgressNotification(context: Context, channelId: String, notificationId: Int, title: String, iconRes: Int)
+```
+ایجاد یک نوتیفیکیشن حاوی نوار پیشرفت (Progress bar).
+
+```kotlin
+fun updateProgress(progress: Int, max: Int = 100, message: String = "$progress%")
+```
+به‌روزرسانی درصد پیشرفت نوار به همراه متن دلخواه.
+
+```kotlin
+fun setIndeterminate(message: String = "Processing...")
+```
+تبدیل نوار پیشرفت به حالت نامشخص (Indeterminate) در مواقعی که زمان پایان عملیات مشخص نیست.
+
+```kotlin
+fun finish(successMessage: String = "Complete")
+```
+حذف نوار پیشرفت و نمایش پیام پایان و موفقیت عملیات.
+
+```kotlin
+fun cancel()
+```
+لغو کردن نوتیفیکیشن در حال اجرا و حذف آن.
+
+### ScheduledNotification
+
+```kotlin
+inline fun <reified W : CoroutineWorker> schedule(context: Context, delayMillis: Long, inputData: Data = workDataOf()): UUID
+```
+زمان‌بندی یک پردازش پس‌زمینه (Worker) برای نمایش یک نوتیفیکیشن با تأخیر مشخص.
+
+```kotlin
+fun cancel(context: Context, workId: UUID)
+```
+لغو نوتیفیکیشنِ زمان‌بندی شده از طریق شناسه فرآیند.

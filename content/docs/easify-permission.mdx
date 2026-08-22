@@ -1,0 +1,159 @@
+---
+title: easify-permission
+description: راهنمای استفاده از ماژول easify-permission
+---
+
+# easify-permission
+
+این ماژول برای مدیریت دسترسی‌ها (Permissions) در اپلیکیشن‌های اندرویدی مبتنی بر Jetpack Compose توسعه یافته است. با این ماژول می‌توانید بدون نیاز به کدنویسی طولانی، وضعیت دسترسی‌ها را بررسی کرده و از کاربر اجازه بگیرید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-permission:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### درخواست دسترسی به صورت ساده (Request Single Permission)
+با استفاده از کامپوزبل `RequestPermission` می‌توانید به محض اجرای یک صفحه، یک دسترسی خاص را از کاربر درخواست کنید.
+
+**مثال استفاده در Jetpack Compose:**
+
+```kotlin
+import android.Manifest
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import ir.amirhesambandegan.easify_permission.RequestPermission
+
+@Composable
+fun CameraPermissionScreen() {
+    var statusText by remember { mutableStateOf("در حال بررسی دسترسی...") }
+
+    RequestPermission(
+        permission = Manifest.permission.CAMERA,
+        onGrant = {
+            statusText = "دسترسی دوربین تایید شد ✅"
+        },
+        onDenied = {
+            statusText = "دسترسی دوربین رد شد ❌"
+        }
+    )
+
+    Text(text = statusText)
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+```kotlin
+fun Context.openAppSettings()
+```
+این اکستنشن فانکشن روی `Context` صفحه تنظیمات اختصاصی اپلیکیشن را در تنظیمات سیستم اندروید باز می‌کند. از این تابع می‌توان در مواردی که دسترسی به صورت دائمی رد شده (Permanently Denied) و کاربر باید به صورت دستی از داخل تنظیمات به اپلیکیشن دسترسی بدهد، استفاده کرد.
+
+```kotlin
+object BatteryOptimizationHelper {
+    fun isIgnoringBatteryOptimizations(context: Context): Boolean
+    fun requestIgnoreBatteryOptimizations(context: Context)
+}
+```
+کلاس کمکی برای بررسی و درخواست مستثنی شدن اپلیکیشن از بهینه‌سازی باتری (Doze Mode).
+- **`isIgnoringBatteryOptimizations`**: بررسی می‌کند که آیا برنامه از بهینه‌سازی باتری مستثنی شده است یا خیر. ورودی آن `context` است و یک مقدار `Boolean` برمی‌گرداند.
+- **`requestIgnoreBatteryOptimizations`**: کاربر را به صفحه تنظیمات برای لغو بهینه‌سازی باتری برای اپلیکیشن هدایت می‌کند تا برنامه بتواند در پس‌زمینه بدون محدودیت اجرا شود.
+
+```kotlin
+fun isGranted(permission: String, context: Context): PermissionStats?
+```
+تابع کمکی برای بررسی اینکه آیا یک دسترسی مشخص (Runtime Permission) از قبل داده شده است یا خیر.
+- **ورودی‌ها**: رشته `permission` (مانند `Manifest.permission.CAMERA`) و `context`.
+- **خروجی**: وضعیت دسترسی را در قالب مقدار `PermissionStats` (مانند `PERMISSION_GRANTED` یا `PERMISSION_DENIED`) برمی‌گرداند.
+
+```kotlin
+class MultiplePermissionsState(
+    val permissions: List<String>,
+    val allPermissionsGranted: Boolean,
+    val shouldShowRationale: Boolean,
+    val launchMultiplePermissionRequest: () -> Unit
+)
+```
+کلاسی برای نگهداری وضعیت چندین درخواست دسترسی در Jetpack Compose.
+- **`permissions`**: لیست دسترسی‌های درخواستی.
+- **`allPermissionsGranted`**: مقدار `true` اگر تمام دسترسی‌ها داده شده باشند.
+- **`shouldShowRationale`**: نشان‌دهنده نیاز به نمایش توضیح به کاربر پیش از درخواست مجدد است.
+- **`launchMultiplePermissionRequest`**: تابعی برای اجرای دیالوگ درخواست دسترسی‌های لیست شده.
+
+```kotlin
+@Composable
+fun rememberMultiplePermissionsState(permissions: List<String>): MultiplePermissionsState
+```
+این کامپوزبل وضعیت چند دسترسی مختلف (لیست رشته‌ها) را بررسی کرده و در قالب یک آبجکت `MultiplePermissionsState` برمی‌گرداند که وضعیت فعلی آن‌ها و تابع فراخوانی دیالوگ درخواست را شامل می‌شود.
+
+```kotlin
+enum class PermissionStatus {
+    GRANTED,
+    DENIED_SHOULD_SHOW_RATIONALE,
+    PERMANENTLY_DENIED
+}
+```
+یک enum برای نمایش جزئیات وضعیت دسترسی شامل تایید شده (`GRANTED`)، رد شده با نیاز به نمایش دلیل (`DENIED_SHOULD_SHOW_RATIONALE`)، یا رد شده برای همیشه (`PERMANENTLY_DENIED`).
+
+```kotlin
+class PermissionState(
+    val permission: String,
+    val status: PermissionStatus,
+    val launchPermissionRequest: () -> Unit
+)
+```
+کلاسی برای نگهداری وضعیت یک درخواست دسترسی مشخص در Jetpack Compose.
+- شامل نام `permission`، وضعیت فعلی آن `status` و تابع `launchPermissionRequest` جهت فراخوانی درخواست دسترسی.
+
+```kotlin
+@Composable
+fun rememberPermissionState(permission: String): PermissionState
+```
+کامپوزبلی برای دریافت و مشاهده وضعیت یک دسترسی در طول چرخه حیات رابط کاربری (Compose). خروجی آن `PermissionState` است.
+
+```kotlin
+enum class PermissionStats {
+    PERMISSION_GRANTED,
+    PERMISSION_DENIED
+}
+```
+یک enum ساده برای مشخص کردن وضعیت کلی یک دسترسی. کلاس Companion آن دارای تابع `fromNumber` برای تبدیل کدهای بازگشتی اندروید (`PackageManager`) به مقادیر این کلاس است.
+
+```kotlin
+@Composable
+fun RequestMultiplePermissions(
+    permissions: List<String>,
+    onGrant: () -> Unit,
+    onDenied: () -> Unit
+)
+```
+کامپوزبل بدون رابط کاربری (Headless Effect) که به محض بارگذاری در صفحه، لیست دسترسی‌های داده شده در متغیر `permissions` را درخواست می‌کند.
+- **`onGrant`**: زمانی که تمامی دسترسی‌ها با موفقیت دریافت شوند اجرا می‌گردد.
+- **`onDenied`**: در صورت رد شدن حداقل یکی از دسترسی‌ها فراخوانی می‌شود.
+
+```kotlin
+@Composable
+fun RequestPermission(
+    permission: String,
+    onGrant: () -> Unit,
+    onDenied: () -> Unit
+)
+```
+کامپوزبل بدون رابط کاربری برای درخواست یک دسترسی خاص (`permission`).
+- در صورت داشتن مجوز بلافاصله وگرنه پس از تایید کاربر، `onGrant` فراخوانی می‌شود. در صورت رد شدن، `onDenied` اجرا می‌شود.
+
+```kotlin
+object SpecialPermissionsHelper {
+    fun canDrawOverlays(context: Context): Boolean
+    fun requestOverlayPermission(context: Context)
+}
+```
+کلاس کمکی جهت بررسی و درخواست دسترسی‌های ویژه سیستم عامل، به‌طور خاص رسم بر روی برنامه‌های دیگر (System Alert Window).
+- **`canDrawOverlays`**: دسترسی Overlay را بررسی می‌کند و یک `Boolean` برمی‌گرداند.
+- **`requestOverlayPermission`**: با ارجاع کاربر به بخش تنظیمات، اجازه رسم روی برنامه‌ها را درخواست می‌کند.

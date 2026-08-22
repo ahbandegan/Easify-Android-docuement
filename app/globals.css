@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+@source "../node_modules/fumadocs-ui/dist/**/*.js";
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* Fix RTL layout for code blocks */
+figure, pre, pre code, .ndx-code {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+/* Make sure the Fumadocs CodeBlock wrapper (figure or div) has proper styling 
+   since Tailwind v4 isn't generating the plugin classes */
+figure {
+  position: relative !important;
+  background-color: #111111 !important;
+  border-radius: 0.5rem !important;
+  border: 1px solid var(--color-fd-border) !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1rem !important;
+  overflow: hidden !important;
+}
+
+/* Ensure the main pre container blends into the wrapper */
+pre {
+  margin: 0 !important;
+  background-color: transparent !important;
+  padding: 1rem !important;
+  overflow-x: auto !important;
+}
+
+/* Fix for zebra striping on individual lines - REMOVED display: block to fix double spacing */
+.line, span[data-line] {
+  background-color: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Inline code styling to prevent it from looking like a full block */
+p code, li code, h1 code, h2 code, h3 code, a code, td code, th code {
+  background-color: var(--color-fd-muted) !important;
+  padding: 0.2rem 0.4rem !important;
+  border-radius: 0.25rem !important;
+  white-space: nowrap !important;
+}

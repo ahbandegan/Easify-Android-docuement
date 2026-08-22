@@ -1,0 +1,348 @@
+---
+title: easify-ui
+description: راهنمای استفاده از ماژول easify-ui
+---
+
+# easify-ui
+
+این ماژول مجموعه‌ای از کامپوننت‌های رابط کاربری (UI) مدرن و منعطف برای Jetpack Compose است که به شما کمک می‌کند رابط‌های کاربری جذاب و کاربردی را در کمترین زمان بسازید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-ui:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### استفاده از `EasifyOtpInput` برای دریافت کد تایید
+
+یکی از نیازهای رایج برنامه‌ها، دریافت کد تایید (OTP) است. `EasifyOtpInput` یک کامپوننت آماده و زیبا برای این منظور است که از انیمیشن‌های خطا (Shake) نیز پشتیبانی می‌کند.
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_ui.EasifyOtpInput
+
+@Composable
+fun OtpScreen() {
+    var otpValue by remember { mutableStateOf("") }
+    var hasError by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text("لطفاً کد تایید ۴ رقمی را وارد کنید:")
+        
+        EasifyOtpInput(
+            value = otpValue,
+            onValueChange = { newValue ->
+                otpValue = newValue
+                hasError = false // پاک کردن خطا هنگام تایپ مجدد
+            },
+            length = 4,
+            isError = hasError,
+            activeColor = Color.Blue,
+            inactiveColor = Color.LightGray,
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+            onComplete = { completedOtp ->
+                // بررسی صحت کد وارد شده
+                if (completedOtp != "1234") {
+                    hasError = true
+                }
+            }
+        )
+        
+        if (hasError) {
+            Text(
+                text = "کد وارد شده اشتباه است!",
+                color = Color.Red,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+    }
+}
+```
+
+### استفاده از کنترل قطعه‌ای `EasifySegmentedControl`
+
+این کامپوننت برای ایجاد یک منوی تب‌مانند زیبا و متحرک (شبیه به iOS Segmented Control) بسیار مناسب است.
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_ui.EasifySegmentedControl
+
+@Composable
+fun SegmentedControlExample() {
+    val tabs = listOf("روزانه", "هفتگی", "ماهانه")
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        EasifySegmentedControl(
+            items = tabs,
+            selectedIndex = selectedTabIndex,
+            onItemSelected = { index ->
+                selectedTabIndex = index
+            }
+        )
+
+        Text(
+            text = "گزینه انتخاب شده: ${tabs[selectedTabIndex]}",
+            modifier = Modifier.padding(top = 24.dp)
+        )
+    }
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+### EasifyDesignModifiers
+
+```kotlin
+fun Modifier.dashedBorder(
+    color: Color = Color.Gray,
+    strokeWidth: Dp = 2.dp,
+    dashLength: Dp = 8.dp,
+    gapLength: Dp = 4.dp,
+    cornerRadius: Dp = 0.dp
+): Modifier
+```
+اضافه کردن یک حاشیه خط‌چین دور کامپوننت.
+
+```kotlin
+fun Modifier.pulse(
+    minScale: Float = 0.95f,
+    maxScale: Float = 1.05f,
+    minAlpha: Float = 0.5f,
+    durationMillis: Int = 1000
+): Modifier
+```
+افزودن انیمیشن پالس (تغییر اندازه و شفافیت متناوب) به کامپوننت.
+
+```kotlin
+fun Modifier.glass(
+    blurRadius: Dp = 16.dp,
+    backgroundColor: Color = Color.White.copy(alpha = 0.2f),
+    shape: Shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
+): Modifier
+```
+اعمال افکت شیشه‌ای (Glassmorphism) به کامپوننت (نیازمند اندروید 12 به بالا).
+
+```kotlin
+fun Modifier.fadingEdges(
+    topEdgeHeight: Dp = 16.dp,
+    bottomEdgeHeight: Dp = 16.dp
+): Modifier
+```
+ایجاد حاشیه‌های محوشونده در بالا و پایین یک ناحیه قابل اسکرول.
+
+### EasifyDraggable
+
+```kotlin
+@Composable
+fun EasifyFloatingDraggable(
+    modifier: Modifier = Modifier,
+    initialPosition: Offset = Offset.Zero,
+    content: @Composable () -> Unit
+)
+```
+ایجاد یک جعبه شناور و قابل جابجایی (Drag) در صفحه.
+
+```kotlin
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun <T : Any> EasifyReorderableList(
+    items: List<T>,
+    onReorder: (from: Int, to: Int) -> Unit,
+    modifier: Modifier = Modifier,
+    key: ((T) -> Any)? = null,
+    listState: LazyListState = rememberLazyListState(),
+    itemContent: @Composable LazyItemScope.(item: T, isDragging: Boolean) -> Unit
+)
+```
+ایجاد لیستی از آیتم‌ها با قابلیت مرتب‌سازی مجدد (Reorder) از طریق کشیدن (Drag and drop).
+
+### EasifyExpandableText
+
+```kotlin
+@Composable
+fun EasifyExpandableText(
+    text: String,
+    modifier: Modifier = Modifier,
+    collapsedMaxLines: Int = 3,
+    expandText: String = "Read more",
+    collapseText: String = "Show less",
+    textStyle: TextStyle = LocalTextStyle.current,
+    expandColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.primary
+)
+```
+نمایش متنی که با کلیک روی دکمه قابلیت باز شدن و بسته شدن دارد تا خطوط اضافی را نشان دهد یا پنهان کند.
+
+### EasifyModifiers
+
+```kotlin
+fun Modifier.bounceClick(
+    minScale: Float = 0.95f,
+    onClick: () -> Unit
+): Modifier
+```
+ایجاد افکت پرش (کوچک شدن) هنگام کلیک روی کامپوننت (مشابه دکمه‌های iOS).
+
+```kotlin
+fun Modifier.hideKeyboardOnTapOutside(): Modifier
+```
+مخفی کردن صفحه کلید هنگامی که کاربر روی فضای خارج از قسمت متنی (Tap Outside) کلیک می‌کند.
+
+```kotlin
+fun Modifier.shimmer(
+    showShimmer: Boolean = true,
+    targetColor: Color = Color.White.copy(alpha = 0.3f)
+): Modifier
+```
+افزودن افکت انیمیشنی درخشش (Shimmer) به پس‌زمینه کامپوننت، معمولاً برای حالت بارگذاری استفاده می‌شود.
+
+```kotlin
+fun Modifier.shake(isError: Boolean): Modifier
+```
+ایجاد لرزش افقی در کامپوننت برای نشان دادن وضعیت خطا.
+
+### EasifyOtpInput
+
+```kotlin
+@Composable
+fun EasifyOtpInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    length: Int = 4,
+    isError: Boolean = false,
+    boxSize: Dp = 56.dp,
+    boxSpacing: Dp = 8.dp,
+    activeColor: Color = MaterialTheme.colorScheme.primary,
+    inactiveColor: Color = Color.Gray,
+    errorColor: Color = MaterialTheme.colorScheme.error,
+    onComplete: ((String) -> Unit)? = null
+)
+```
+یک ورودی رمز یک‌بار مصرف (OTP) با باکس‌های مجزا برای هر کاراکتر.
+
+### EasifySegmentedControl
+
+```kotlin
+@Composable
+fun EasifySegmentedControl(
+    items: List<String>,
+    selectedIndex: Int,
+    onItemSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    height: Dp = 48.dp,
+    containerColor: Color = Color.LightGray.copy(alpha = 0.3f),
+    indicatorColor: Color = MaterialTheme.colorScheme.surface,
+    activeTextColor: Color = MaterialTheme.colorScheme.onSurface,
+    inactiveTextColor: Color = Color.Gray,
+    cornerRadius: Dp = 24.dp
+)
+```
+یک کنترل قطعه‌ای برای انتخاب یک گزینه از میان گزینه‌های موجود با انیمیشن جابجایی.
+
+### EasifySwipeToAction
+
+```kotlin
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EasifySwipeToAction(
+    modifier: Modifier = Modifier,
+    onSwipeRight: (() -> Unit)? = null,
+    onSwipeLeft: (() -> Unit)? = null,
+    rightIcon: ImageVector = Icons.Default.Delete,
+    leftIcon: ImageVector = Icons.Default.Email,
+    rightBackgroundColor: Color = MaterialTheme.colorScheme.errorContainer,
+    leftBackgroundColor: Color = MaterialTheme.colorScheme.secondaryContainer,
+    rightIconColor: Color = MaterialTheme.colorScheme.onErrorContainer,
+    leftIconColor: Color = MaterialTheme.colorScheme.onSecondaryContainer,
+    content: @Composable () -> Unit
+)
+```
+ایجاد قابلیتی برای کشیدن (Swipe) افقی آیتم‌ها به منظور انجام عملیات‌هایی مانند حذف یا خوانده شدن.
+
+### ModifierUtils
+
+```kotlin
+fun Modifier.rtlMirror(): Modifier
+```
+آینه کردن افقی یک عنصر زمانی که جهت چیدمان راست به چپ (RTL) است. مناسب برای آیکون‌هایی مانند پیکان بازگشت.
+
+### Spacer
+
+```kotlin
+@Composable
+fun SpacerWidth(width: Dp)
+```
+ایجاد فاصله افقی (Spacer) با اندازه دقیق مشخص شده.
+
+```kotlin
+@Composable
+fun SpacerWidth(fraction: Float = 1f)
+```
+ایجاد فاصله افقی با اندازه‌ای معادل کسری از فضای موجود.
+
+```kotlin
+@Composable
+fun SpacerHeight(height: Dp)
+```
+ایجاد فاصله عمودی (Spacer) با اندازه دقیق مشخص شده.
+
+```kotlin
+@Composable
+fun SpacerHeight(fraction: Float = 1f)
+```
+ایجاد فاصله عمودی با اندازه‌ای معادل کسری از فضای موجود.
+
+### SuspendButton
+
+```kotlin
+enum class SuspendButtonType {
+    FILLED,
+    ELEVATED,
+    TONAL,
+    OUTLINED,
+    TEXT
+}
+```
+مجموعه‌ای از انواع استایل ظاهری برای کامپوننت دکمه.
+
+```kotlin
+@Composable
+fun SuspendButton(
+    onClick: suspend CoroutineScope.() -> Unit,
+    modifier: Modifier = Modifier,
+    type: SuspendButtonType = SuspendButtonType.FILLED,
+    isLoading: Boolean = false,
+    enabled: Boolean = true,
+    loadingContent: @Composable () -> Unit = {
+        CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 2.5.dp
+        )
+    },
+    content: @Composable RowScope.() -> Unit
+)
+```
+یک دکمه قابل سفارشی‌سازی با پشتیبانی از Coroutine‌های کاتلین و نمایش وضعیت بارگذاری. جلوگیری از کلیک‌های متوالی را به صورت خودکار مدیریت می‌کند.

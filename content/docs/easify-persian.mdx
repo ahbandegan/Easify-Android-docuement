@@ -1,0 +1,168 @@
+---
+title: easify-persian
+description: راهنمای استفاده از ماژول easify-persian
+---
+
+# easify-persian
+
+این ماژول مجموعه‌ای از ابزارهای کاربردی برای کار با تقویم جلالی، تاریخ و اعداد فارسی در Jetpack Compose است. با این ماژول می‌توانید دیالوگ‌های انتخاب تاریخ فارسی داشته باشید و اعداد و متون را به راحتی به فرمت استاندارد فارسی تبدیل کنید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-persian:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### استفاده از دیالوگ انتخاب تاریخ (Persian Date Picker Dialog)
+کامپوزبل `PersianDatePickerDialog` یک دیالوگ زیبا و بومی برای انتخاب تاریخ شمسی به کاربر نمایش می‌دهد.
+
+**مثال استفاده در Jetpack Compose:**
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import ir.amirhesambandegan.easify_persian.PersianDatePickerDialog
+
+@Composable
+fun DatePickerExampleScreen() {
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedDateText by remember { mutableStateOf("تاریخی انتخاب نشده است") }
+
+    Column {
+        Button(onClick = { showDialog = true }) {
+            Text("انتخاب تاریخ تولد")
+        }
+
+        Text(text = selectedDateText)
+    }
+
+    if (showDialog) {
+        PersianDatePickerDialog(
+            onDismissRequest = { showDialog = false },
+            onDateSelected = { jalaliDate ->
+                selectedDateText = "تاریخ انتخاب شده: ${jalaliDate.year}/${jalaliDate.month}/${jalaliDate.day}"
+                showDialog = false
+            }
+        )
+    }
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+```kotlin
+data class JalaliDate(val year: Int, val month: Int, val day: Int)
+```
+یک کلاس داده برای نگهداری تاریخ شمسی (جلالی).
+- **پارامترها:** `year` (سال شمسی)، `month` (ماه شمسی از ۱ تا ۱۲)، `day` (روز از ماه از ۱ تا ۳۱).
+
+```kotlin
+fun Date.toJalali(): JalaliDate
+```
+یک شیء `Date` میلادی را به یک `JalaliDate` (تاریخ شمسی) تبدیل می‌کند.
+- **خروجی:** یک نمونه از `JalaliDate` معادل تاریخ میلادی.
+
+```kotlin
+fun JalaliDate.toGregorian(): Date
+```
+یک تاریخ شمسی (`JalaliDate`) را به تاریخ میلادی (`Date`) تبدیل می‌کند.
+- **خروجی:** یک نمونه از `Date` معادل تاریخ شمسی.
+
+```kotlin
+fun JalaliDate.getMonthName(): String
+```
+نام ماه شمسی مربوط به تاریخ را برمی‌گرداند (مانند "فروردین"، "اردیبهشت").
+- **خروجی:** نام ماه به صورت رشته (String). در صورت نامعتبر بودن مقدار "نامشخص" را برمی‌گرداند.
+
+```kotlin
+fun JalaliDate.isLeapYear(): Boolean
+```
+بررسی می‌کند که آیا سال تاریخ شمسی مورد نظر، سال کبیسه است یا خیر.
+- **خروجی:** در صورت کبیسه بودن `true` و در غیر این صورت `false`.
+
+```kotlin
+@Composable
+fun PersianDatePickerDialog(
+    onDismissRequest: () -> Unit,
+    onDateSelected: (JalaliDate) -> Unit,
+    initialDate: JalaliDate = Date().toJalali()
+)
+```
+یک دیالوگ در Jetpack Compose برای انتخاب تاریخ شمسی نمایش می‌دهد.
+- **پارامترها:** 
+  - `onDismissRequest`: تابعی که هنگام انصراف و بستن دیالوگ فراخوانی می‌شود.
+  - `onDateSelected`: تابعی که هنگام تایید تاریخ فراخوانی شده و `JalaliDate` انتخاب‌شده را به عنوان ورودی می‌گیرد.
+  - `initialDate`: تاریخ پیش‌فرض نمایش داده شده در دیالوگ (به طور پیش‌فرض تاریخ روز جاری).
+
+```kotlin
+fun String.toStandardPersian(): String
+```
+متن فارسی را با اصلاح حروف عربی (مانند 'ي' به 'ی' و 'ك' به 'ک')، حذف اعراب و تبدیل اعداد انگلیسی به فارسی، استانداردسازی می‌کند.
+- **خروجی:** متن فارسی استاندارد شده به صورت رشته (String).
+
+```kotlin
+fun Long.toPersianTimeAgo(): String
+```
+یک زمان (بر حسب میلی‌ثانیه) را به عبارت خوانای فارسی برای گذشت زمان تبدیل می‌کند (مانند "۵ دقیقه پیش"، "دیروز").
+- **خروجی:** عبارت فارسی مربوط به زمان گذشته شده.
+
+```kotlin
+@Composable
+fun PersianTimePickerDialog(
+    onDismissRequest: () -> Unit,
+    onTimeSelected: (hour: Int, minute: Int) -> Unit,
+    initialHour: Int = 12,
+    initialMinute: Int = 0
+)
+```
+یک دیالوگ در Jetpack Compose برای انتخاب زمان نمایش می‌دهد.
+- **پارامترها:**
+  - `onDismissRequest`: تابعی که هنگام انصراف از انتخاب فراخوانی می‌شود.
+  - `onTimeSelected`: تابعی که پس از تایید زمان با ساعت (`hour`) و دقیقه (`minute`) انتخاب شده فراخوانی می‌شود.
+  - `initialHour`: ساعت پیش‌فرض (پیش‌فرض ۱۲).
+  - `initialMinute`: دقیقه پیش‌فرض (پیش‌فرض ۰).
+
+```kotlin
+fun String.isValidNationalCode(): Boolean
+```
+کد ملی ایرانیان را با بررسی طول (۱۰ رقم) و الگوریتم چک‌سام ارزیابی می‌کند.
+- **خروجی:** اگر کد ملی معتبر باشد `true` و در غیر این صورت `false`.
+
+```kotlin
+fun String.isValidPersianMobile(): Boolean
+```
+شماره موبایل ایرانی را ارزیابی می‌کند که آیا معتبر است یا خیر (پشتیبانی از پیش‌شماره‌های مختلف مانند 09، +989، 989).
+- **خروجی:** اگر شماره موبایل معتبر باشد `true` و در غیر این صورت `false`.
+
+```kotlin
+fun String.isValidBankCard(): Boolean
+```
+شماره کارت بانکی ۱۶ رقمی ایرانی را با الگوریتم Luhn ارزیابی می‌کند.
+- **خروجی:** در صورت معتبر بودن شماره کارت `true` و در غیر این صورت `false`.
+
+```kotlin
+fun Number.toPersianCurrencyText(unit: String = "تومان"): String
+```
+یک عدد را به متن معادل ارز فارسی تبدیل می‌کند (مثال: ۱۵۰۰۰ به "پانزده هزار تومان").
+- **پارامترها:** `unit` واحد پول (پیش‌فرض "تومان").
+- **خروجی:** رشته قالب‌بندی شده برای مبلغ پولی.
+
+```kotlin
+fun String.toPersianDigits(): String
+```
+تمام ارقام انگلیسی موجود در یک رشته را به ارقام فارسی معادل تبدیل می‌کند.
+- **خروجی:** رشته جدید با اعداد فارسی.
+
+```kotlin
+fun Long.toPersianWords(): String
+```
+یک عدد (از نوع Long) را به حروف فارسی تبدیل می‌کند (مانند 1250 به "یک هزار و دویست و پنجاه").
+- **خروجی:** نمایش عددی به حروف فارسی.

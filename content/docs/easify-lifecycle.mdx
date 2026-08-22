@@ -1,0 +1,214 @@
+---
+title: easify-lifecycle
+description: راهنمای استفاده از ماژول easify-lifecycle
+---
+
+# easify-lifecycle
+
+مدیریت چرخه‌ی حیات (Lifecycle) در کامپوز گاهی پیچیده می‌شود. این ماژول افکت‌ها و ناظران (Observers) متعددی را برای کنترل ساده و تمیز چرخه‌ی حیات کامپوننت‌ها و اکتیویتی ارائه می‌دهد (مانند اجرا در زمان Resume، Pause و ...).
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-lifecycle:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### ۱. استفاده از افکت‌های چرخه‌ی حیات (Lifecycle Effects)
+
+به جای درگیر شدن با `DisposableEffect` و `LifecycleEventObserver`، می‌توانید به سادگی از توابع آماده مانند `OnResumeEffect`، `OnPauseEffect`، `OnCreateEffect` و غیره استفاده کنید.
+
+```kotlin
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_lifecycle.OnResumeEffect
+import ir.amirhesambandegan.easify_lifecycle.OnPauseEffect
+
+@Composable
+fun VideoPlayerScreen() {
+    
+    // کدهای داخل این بلاک تنها زمانی اجرا می‌شوند که صفحه در حالت Resume قرار بگیرد
+    OnResumeEffect {
+        // شروع پخش ویدیو یا رفرش داده‌ها
+        playVideo()
+    }
+
+    // کدهای داخل این بلاک تنها در زمان Pause شدن صفحه اجرا می‌شوند
+    OnPauseEffect {
+        // توقف موقت ویدیو
+        pauseVideo()
+    }
+
+    Text("در حال پخش ویدیو...")
+}
+```
+
+### ۲. ناظر کیبورد (KeyboardObserver) و تغییرات صفحه
+
+گاهی نیاز دارید بدانید چه زمانی کیبورد باز یا بسته شده است تا فرم‌ها را اسکرول کنید یا ارتفاع المان‌ها را تغییر دهید.
+
+```kotlin
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_lifecycle.KeyboardObserver
+
+@Composable
+fun KeyboardAwareScreen() {
+    // گرفتن وضعیت فعلی باز یا بسته بودن کیبورد به صورت State
+    val isKeyboardOpen by KeyboardObserver.isKeyboardVisible().collectAsState(initial = false)
+
+    Box(modifier = Modifier.padding(bottom = if (isKeyboardOpen) 16.dp else 0.dp)) {
+        // فیلدهای ورودی (TextField)
+    }
+}
+```
+
+### ۳. ناظر پس‌زمینه/پیش‌زمینه اپلیکیشن (AppForegroundObserver)
+
+زمانی که کل اپلیکیشن (نه فقط یک صفحه خاص) به بک‌گراند می‌رود یا برمی‌گردد، می‌توانید با این ابزار لاجیک‌های امنیتی (مثل قفل کردن اپلیکیشن بانکی) را پیاده کنید.
+
+```kotlin
+import androidx.compose.runtime.Composable
+import ir.amirhesambandegan.easify_lifecycle.AppForegroundObserver
+
+@Composable
+fun SecureAppWrapper() {
+    AppForegroundObserver(
+        onAppBackgrounded = {
+            // وقتی کاربر دکمه هوم را زد و اپ از دید خارج شد
+            lockApplication()
+        },
+        onAppForegrounded = {
+            // وقتی کاربر دوباره اپ را باز کرد
+            requireBiometricAuth()
+        }
+    )
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+```kotlin
+@Composable
+fun LifecycleTimer(
+    intervalMillis: Long,
+    activeState: Lifecycle.State = Lifecycle.State.RESUMED,
+    onTick: () -> Unit
+)
+```
+یک تایمر کامپوزابل (Composable) که در بازه‌های زمانی مشخص شده تیک می‌خورد، اما تنها زمانی که چرخه‌ی حیات (Lifecycle) در وضعیت فعالِ تعیین شده باشد. این تایمر در صورت خروج کاربر از صفحه به صورت خودکار متوقف شده و با بازگشت کاربر مجدداً از سر گرفته می‌شود.
+
+**پارامترها:**
+- `intervalMillis`: فاصله زمانی بین هر تیک به میلی‌ثانیه.
+- `activeState`: حداقل وضعیت چرخه‌ی حیات (`Lifecycle.State`) برای اجرای تایمر. مقدار پیش‌فرض `Lifecycle.State.RESUMED` است.
+- `onTick`: تابعی که در هر تیک تایمر اجرا می‌شود.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnCreateEffect(onCreate: () -> Unit)
+```
+یک افکت کامپوزابل (Side-effect) که در زمان رخ دادن رویداد `ON_CREATE` در چرخه‌ی حیات، یک تابع را اجرا می‌کند.
+
+**پارامترها:**
+- `onCreate`: تابعی که زمان ایجاد (Create) شدن چرخه‌ی حیات اجرا می‌شود.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnDestroyEffect(onDestroy: () -> Unit)
+```
+یک افکت کامپوزابل که در زمان رخ دادن رویداد `ON_DESTROY` در چرخه‌ی حیات، یک تابع را اجرا می‌کند.
+
+**پارامترها:**
+- `onDestroy`: تابعی که زمان از بین رفتن (Destroy) چرخه‌ی حیات اجرا می‌شود.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnPauseEffect(onPause: () -> Unit)
+```
+یک افکت کامپوزابل که در زمان رخ دادن رویداد `ON_PAUSE` در چرخه‌ی حیات، یک تابع را اجرا می‌کند.
+
+**پارامترها:**
+- `onPause`: تابعی که زمان توقف موقت (Pause) چرخه‌ی حیات اجرا می‌شود.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnResumeEffect(onResume: () -> Unit)
+```
+یک افکت کامپوزابل که در زمان رخ دادن رویداد `ON_RESUME` در چرخه‌ی حیات، یک تابع را اجرا می‌کند.
+
+**پارامترها:**
+- `onResume`: تابعی که زمان از سرگیری (Resume) چرخه‌ی حیات اجرا می‌شود.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnStartEffect(onStart: () -> Unit)
+```
+یک افکت کامپوزابل که در زمان رخ دادن رویداد `ON_START` در چرخه‌ی حیات، یک تابع را اجرا می‌کند.
+
+**پارامترها:**
+- `onStart`: تابعی که زمان شروع (Start) چرخه‌ی حیات اجرا می‌شود.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnStopEffect(onStop: () -> Unit)
+```
+یک افکت کامپوزابل که در زمان رخ دادن رویداد `ON_STOP` در چرخه‌ی حیات، یک تابع را اجرا می‌کند.
+
+**پارامترها:**
+- `onStop`: تابعی که زمان توقف (Stop) چرخه‌ی حیات اجرا می‌شود.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnFirstCreateEffect(
+    key: String = "run_once", 
+    block: suspend () -> Unit
+)
+```
+یک افکت کامپوزابل که تضمین می‌کند بلاک کد داده شده، در طول عمر کامپوزابلِ میزبان دقیقاً یک بار اجرا شود و در برابر ترکیب‌سازی‌های مجدد (Recompositions) زنده بماند.
+
+**پارامترها:**
+- `key`: یک کلید اختیاری برای شناسایی منحصربه‌فرد این وضعیتِ اجرا. مقدار پیش‌فرض `"run_once"` است.
+- `block`: یک بلاک تعلیقی (suspend block) که باید دقیقاً یک بار اجرا شود.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnScreenStateChangedEffect(onStateChanged: (isAwake: Boolean) -> Unit)
+```
+یک افکت کامپوزابل که هنگام روشن یا خاموش شدن فیزیکی صفحه‌ی نمایش، یک تابع را اجرا می‌کند. این افکت یک `BroadcastReceiver` برای گوش دادن به اکشن‌های صفحه ثبت می‌کند.
+
+**پارامترها:**
+- `onStateChanged`: تابعی که با تغییر وضعیت صفحه اجرا می‌شود. اگر صفحه روشن شود مقدار `true` و اگر خاموش شود مقدار `false` دریافت می‌کند.
+**مقدار بازگشتی:** ندارد (Unit)
+
+
+```kotlin
+@Composable
+fun OnWindowFocusChangedEffect(onFocusChanged: (hasFocus: Boolean) -> Unit)
+```
+یک افکت کامپوزابل که تغییرات واقعی فوکوس پنجره را تشخیص می‌دهد. این ابزار برای تشخیص رویدادهایی مثل پایین کشیدن پنل نوتیفیکیشن‌ها یا باز شدن یک دیالوگ سیستمی مفید است.
+
+**پارامترها:**
+- `onFocusChanged`: تابعی که با تغییر فوکوس پنجره اجرا می‌شود. اگر پنجره فوکوس را به دست آورد مقدار `true` و در غیر این صورت مقدار `false` دریافت می‌کند.
+**مقدار بازگشتی:** ندارد (Unit)

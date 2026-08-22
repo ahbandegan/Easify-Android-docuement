@@ -1,0 +1,206 @@
+---
+title: easify-context
+description: راهنمای استفاده از ماژول easify-context
+---
+
+# easify-context
+
+این ماژول مجموعه‌ای از ابزارهای کاربردی (Extension Functions) برای کار با `Context` در اندروید را فراهم می‌کند. با استفاده از این توابع می‌توانید کارهای روزمره مانند نمایش پیام، مدیریت کیبورد و کار با کلیپ‌بورد را بسیار ساده‌تر انجام دهید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-context:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### ۱. نمایش پیام (Toast)
+به جای نوشتن کدهای طولانی برای نمایش پیام، می‌توانید مستقیماً از توابع `toast` و `longToast` روی `Context` استفاده کنید.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_context.toast
+
+@Composable
+fun ToastExample() {
+    val context = LocalContext.current
+
+    Button(onClick = { context.toast("اطلاعات با موفقیت ذخیره شد") }) {
+        Text("نمایش پیام کوتاه")
+    }
+}
+```
+
+### ۲. مدیریت کیبورد (Keyboard Management)
+می‌توانید کیبورد را به سادگی نمایش داده یا مخفی کنید.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import ir.amirhesambandegan.easify_context.hideKeyboard
+
+@Composable
+fun KeyboardExample() {
+    val context = LocalContext.current
+    val view = LocalView.current
+
+    Button(onClick = { context.hideKeyboard(view) }) {
+        Text("مخفی کردن کیبورد")
+    }
+}
+```
+
+### ۳. کار با کلیپ‌بورد (Clipboard)
+کپی کردن متن در کلیپ‌بورد به راحتی امکان‌پذیر است.
+
+```kotlin
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_context.copyToClipboard
+
+@Composable
+fun ClipboardExample() {
+    val context = LocalContext.current
+
+    Button(onClick = { context.copyToClipboard("متن برای کپی") }) {
+        Text("کپی کردن متن")
+    }
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+### اطلاعات اپلیکیشن (ContextAppInfo)
+```kotlin
+fun Context.isAppInstalled(packageName: String): Boolean
+val Context.appVersionName: String
+val Context.appVersionCode: Long
+fun Context.openPlayStore(targetPackageName: String = packageName)
+```
+- `isAppInstalled`: دریافت نام پکیج، برگرداندن وضعیت نصب بودن (Boolean).
+- پراپرتی‌های دریافت نسخه اپ.
+- `openPlayStore`: دریافت اختیاری نام پکیج جهت بازکردن اپلیکیشن مارکت.
+
+### وضعیت دستگاه (ContextDeviceState)
+```kotlin
+val Context.isDarkThemeEnabled: Boolean
+val Context.isLocationEnabled: Boolean
+val Context.isInternetAvailable: Boolean
+fun Context.isEmulator(): Boolean
+fun Context.hasNfc(): Boolean
+fun Context.hasCameraFlash(): Boolean
+val Context.isIgnoringBatteryOptimizations: Boolean
+fun Context.requestIgnoreBatteryOptimizations()
+```
+- مجموعه‌ای از اکستنشن‌ها که مقادیر `Boolean` در خصوص فعال بودن بخش‌های سخت‌افزاری/نرم‌افزاری برمی‌گردانند. متد آخر (`requestIgnoreBatteryOptimizations`) درخواست حذف بهینه‌سازی باتری را از کاربر می‌کند.
+
+### مدیریت کیبورد (ContextKeyboard)
+```kotlin
+fun Context.hideKeyboard(view: View?)
+fun Context.showKeyboard(view: View?)
+```
+- توابعی که نمای ویو را دریافت کرده و کیبورد نرم‌افزاری را روی آن ویو بسته یا باز می‌کنند.
+
+### ناوبری سیستم (ContextNavigation)
+```kotlin
+inline fun <reified T : Activity> Context.start(options: Bundle? = null, crossinline block: Intent.() -> Unit = {})
+fun Context.restartApp()
+fun Context.openWifiSettings()
+fun Context.openLocationSettings()
+fun Context.openBluetoothSettings()
+fun Context.openDisplaySettings()
+```
+- `start`: آغاز یک اکتیویتی جدید با استفاده از متغیرهای ژنریک. بقیه توابع تنظیمات سیستمی متفاوتی را در گوشی باز می‌کنند.
+
+### منابع سیستمی (ContextResources)
+```kotlin
+fun Context.color(@ColorRes id: Int): Int
+fun Context.drawable(@DrawableRes id: Int): Drawable?
+fun Context.dimenPx(@DimenRes id: Int): Int
+fun Context.dimen(@DimenRes id: Int): Float
+```
+- گرفتن شناسه (ID) رنگ‌ها، دراول‌ها و ابعاد و بازگشت مقادیر دقیق پیکسلی و اینتیجر.
+
+### ابعاد صفحه (ContextScreen)
+```kotlin
+val Context.screenWidthPx: Int
+val Context.screenHeightPx: Int
+fun Context.dpToPx(dp: Float): Float
+fun Context.spToPx(sp: Float): Float
+fun Context.keepScreenOn(enable: Boolean)
+```
+- پراپرتی‌ها پیکسل ابعاد صفحه را برمی‌گردانند. `dpToPx` و `spToPx` مقادیر مقیاسی دریافت و پیکسل شناور برمی‌گردانند. `keepScreenOn` تنظیم می‌کند آیا صفحه روشن بماند.
+
+### سیستم سرویس‌ها (ContextServices)
+```kotlin
+val Context.inputMethodManager: InputMethodManager?
+val Context.connectivityManager: ConnectivityManager?
+val Context.notificationManager: NotificationManager?
+val Context.clipboardManager: ClipboardManager?
+val Context.windowManager: WindowManager?
+val Context.alarmManager: AlarmManager?
+val Context.locationManager: LocationManager?
+val Context.powerManager: PowerManager?
+val Context.batteryManager: BatteryManager?
+val Context.audioManager: AudioManager?
+val Context.sensorManager: SensorManager?
+val Context.telephonyManager: TelephonyManager?
+val Context.activityManager: ActivityManager?
+val Context.vibrator: Vibrator?
+```
+- پروپرتی‌های دسترسی راحت به مدیرهای سرویس سیستمی که شئ متناظرشان را در صورت امکان باز می‌گردانند.
+
+### درخواست‌های دسترسی (ContextSettingsPrompts)
+```kotlin
+fun Context.promptEnableWifi()
+fun Context.promptInternetConnectivity()
+fun Context.promptEnableNfc()
+fun Context.promptVolumeControls()
+fun Context.promptEnableBluetooth()
+fun Context.promptEnableLocation()
+```
+- توابعی برای نمایش پیام به کاربر جهت فعال‌سازی امکاناتی نظیر وای‌فای، بلوتوث، موقعیت‌یابی و ولوم.
+
+### ابزار پیام کوتاه (ContextToast)
+```kotlin
+fun Context.toast(message: String)
+fun Context.longToast(message: String)
+```
+- متنی دریافت کرده و نمایش موقتی توست ارائه می‌دهند.
+
+### ابزارهای مفید (ContextUtils)
+```kotlin
+fun Context.findActivity(): Activity?
+fun Context.findFragmentActivity(): FragmentActivity?
+```
+- در اعماق یک `ContextWrapper` گشته و آبجکت `Activity` مربوطه را کشف و باز می‌گردانند.
+
+### بازخورد ویبره (ContextVibration)
+```kotlin
+fun Context.vibrate(durationMillis: Long = 100)
+fun Context.vibratePattern(pattern: LongArray, repeatIndex: Int = -1)
+```
+- اجرای لرزش با گرفتن عدد زمان (میلی‌ثانیه) یا آرایه‌ای از اعداد مشخص‌کننده الگوی لرزش.
+
+### سایر توابع
+```kotlin
+fun Context.copyToClipboard(text: String, label: String = "EasifyData")
+fun Context.getFromClipboard(): String?
+
+fun Context.makeCall(phoneNumber: String)
+fun Context.sendEmail(to: String, subject: String = "", body: String = "")
+fun Context.openBrowser(url: String)
+fun Context.shareText(text: String, title: String = "Share via")
+fun Context.openMap(lat: Double, lng: Double, label: String = "Location")
+fun Context.openAppSettings()
+```
+- این توابع کار با کلیپ‌بورد، باز کردن لینک مرورگر، اشتراک‌گذاری داده‌ها و گرفتن ارتباط تماسی را با استفاده از ورودی‌های رشته‌ای مدیریت می‌کنند.

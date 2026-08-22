@@ -1,0 +1,167 @@
+---
+title: easify-validation
+description: راهنمای استفاده از ماژول easify-validation
+---
+
+# easify-validation
+
+این ماژول مجموعه‌ای جامع از عبارات باقاعده (Regex) و ابزارهای اعتبارسنجی را ارائه می‌دهد تا صحت داده‌های ورودی کاربر (نظیر ایمیل، رمز عبور، شماره موبایل و کد ملی ایران) را به راحتی بررسی کنید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-validation:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### اعتبارسنجی ورودی‌ها با `ValidationRegexes`
+
+کلاس `ValidationRegexes` شامل الگوهای آماده و استاندارد برای اعتبارسنجی انواع داده‌ها از جمله داده‌های مخصوص ایران است.
+
+**مثال: فرم ثبت‌نام و بررسی صحت اطلاعات**
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import ir.amirhesambandegan.easify_validation.ValidationRegexes
+
+@Composable
+fun ValidationExampleScreen() {
+    var email by remember { mutableStateOf("") }
+    var mobile by remember { mutableStateOf("") }
+    var nationalId by remember { mutableStateOf("") }
+    
+    var emailError by remember { mutableStateOf(false) }
+    var mobileError by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier.padding(16.dp)) {
+        
+        // فیلد ایمیل
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("ایمیل") },
+            isError = emailError
+        )
+        if (emailError) {
+            Text("فرمت ایمیل نامعتبر است", color = Color.Red, modifier = Modifier.padding(bottom = 8.dp))
+        }
+
+        // فیلد شماره موبایل (ایران)
+        OutlinedTextField(
+            value = mobile,
+            onValueChange = { mobile = it },
+            label = { Text("شماره موبایل (مانند: 09123456789)") },
+            isError = mobileError,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        if (mobileError) {
+            Text("شماره موبایل باید ۱۱ رقم بوده و با 09 شروع شود", color = Color.Red)
+        }
+
+        Button(
+            onClick = {
+                // بررسی صحت ایمیل
+                emailError = !ValidationRegexes.emailRegex.matches(email)
+                
+                // بررسی صحت شماره موبایل
+                mobileError = !ValidationRegexes.mobileRegex.matches(mobile)
+                
+                // بررسی صحت کد ملی
+                val isNationalIdValid = ValidationRegexes.nationalIdRegex.matches(nationalId)
+                
+                if (!emailError && !mobileError) {
+                    println("اطلاعات با موفقیت تایید شد!")
+                }
+            },
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
+            Text("اعتبارسنجی و ثبت")
+        }
+    }
+}
+```
+
+### لیست الگوهای (Regex) موجود
+
+ماژول اعتبارسنجی الگوهای زیر را پشتیبانی می‌کند:
+- `emailRegex`: اعتبارسنجی آدرس ایمیل.
+- `mobileRegex`: شماره موبایل ایران (مانند `0912...`).
+- `nationalIdRegex`: کد ملی ۱۰ رقمی (بدون محاسبه چک‌سام).
+- `passwordStrongRegex`: رمز عبور قوی (حداقل ۸ کاراکتر، شامل حروف بزرگ، کوچک، عدد و کاراکتر ویژه).
+- `postalCodeRegex`: کد پستی ۱۰ رقمی.
+- `landlineRegex`: تلفن ثابت ایران با پیش‌شماره.
+- `urlRegex`: آدرس‌های اینترنتی استاندارد.
+- `usernameRegex`: نام کاربری (۳ تا ۲۰ کاراکتر شامل حروف انگلیسی، عدد و زیرخط).
+- `persianTextRegex`: فقط حروف فارسی/عربی و فاصله.
+- `englishTextRegex`: فقط حروف انگلیسی و فاصله.
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+### ValidationRegexes
+
+یک شی (Object) جامع که شامل عبارات باقاعده (Regex) پرکاربرد برای اعتبارسنجی داده‌ها در سطح برنامه می‌باشد. این عبارات شامل اعتبارسنجی ایمیل، رمز عبور، شماره تماس، و فرمت‌های مخصوص ایران (مثل کد ملی و شماره موبایل) است.
+
+#### ویژگی‌ها (Properties)
+
+```kotlin
+val emailRegex: Regex
+```
+برای اعتبارسنجی آدرس‌های ایمیل استاندارد استفاده می‌شود. 
+
+```kotlin
+val mobileRegex: Regex
+```
+برای اعتبارسنجی شماره موبایل‌های ایران (باید با ۰۹ شروع شده و ۱۱ رقم باشد) استفاده می‌شود.
+
+```kotlin
+val nationalIdRegex: Regex
+```
+برای اعتبارسنجی کد ملی ایران (فقط ساختار ۱۰ رقمی، بدون محاسبه چک‌سام) استفاده می‌شود.
+
+```kotlin
+val passwordStrongRegex: Regex
+```
+برای اعتبارسنجی رمزهای عبور قوی (حداقل ۸ کاراکتر، شامل حروف کوچک و بزرگ انگلیسی، عدد و کاراکتر خاص) استفاده می‌شود.
+
+```kotlin
+val postalCodeRegex: Regex
+```
+برای اعتبارسنجی کدهای پستی ایران (دقیقا ۱۰ رقم) استفاده می‌شود.
+
+```kotlin
+val landlineRegex: Regex
+```
+برای اعتبارسنجی شماره تلفن‌های ثابت ایران به همراه پیش‌شماره (شروع با ۰ و مجموعا ۱۱ رقم) استفاده می‌شود.
+
+```kotlin
+val urlRegex: Regex
+```
+برای اعتبارسنجی آدرس‌های اینترنتی (URL) استاندارد با یا بدون پروتکل و www استفاده می‌شود.
+
+```kotlin
+val usernameRegex: Regex
+```
+برای اعتبارسنجی نام‌های کاربری (بین ۳ تا ۲۰ کاراکتر شامل حروف، اعداد و زیرخط) استفاده می‌شود.
+
+```kotlin
+val persianTextRegex: Regex
+```
+برای بررسی اینکه متن تنها شامل حروف فارسی/عربی و فاصله باشد استفاده می‌شود.
+
+```kotlin
+val englishTextRegex: Regex
+```
+برای بررسی اینکه متن تنها شامل حروف انگلیسی و فاصله باشد استفاده می‌شود.

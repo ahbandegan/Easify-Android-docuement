@@ -1,0 +1,262 @@
+---
+title: easify-security
+description: راهنمای استفاده از ماژول easify-security
+---
+
+# easify-security
+
+این ماژول مجموعه‌ای از ابزارهای امنیتی مهم را برای محافظت از اپلیکیشن اندرویدی شما فراهم می‌کند. از جمله این ابزارها می‌توان به بررسی روت بودن دستگاه، فعال بودن VPN، و بررسی وضعیت Developer Options اشاره کرد.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-security:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### بررسی وضعیت‌های امنیتی دستگاه (Device Security Checks)
+با استفاده از `EasifySecurityUtils` می‌توانید به راحتی وضعیت‌های مختلف دستگاه را پیش از اجرای عملیات حساس بررسی کنید.
+
+**مثال استفاده در Jetpack Compose:**
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
+import ir.amirhesambandegan.easify_security.EasifySecurityUtils
+
+@Composable
+fun SecurityDashboardScreen() {
+    val context = LocalContext.current
+    
+    val isRooted = EasifySecurityUtils.isRooted()
+    val isVpnActive = EasifySecurityUtils.isVpnActive(context)
+    val isDevMode = EasifySecurityUtils.isDevOptionsEnabled(context)
+
+    Column {
+        Text("وضعیت امنیتی دستگاه:")
+        Text("روت شده: ${if (isRooted) "بله 🔴" else "خیر 🟢"}")
+        Text("وی‌پی‌ان فعال: ${if (isVpnActive) "بله 🟡" else "خیر 🟢"}")
+        Text("گزینه‌های توسعه‌دهنده: ${if (isDevMode) "فعال 🟡" else "غیرفعال 🟢"}")
+    }
+}
+```
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+### `AdvancedSecurityChecker`
+```kotlin
+object AdvancedSecurityChecker
+```
+یک شیء ابزاری که بررسی‌های امنیتی پیشرفته‌ای مانند تشخیص شبیه‌سازها (Emulators)، هوک‌های خطرناک و صحت امضای برنامه را ارائه می‌دهد.
+
+```kotlin
+fun isEmulator(): Boolean
+```
+بررسی می‌کند که آیا دستگاه فعلی احتمالاً یک شبیه‌ساز (Emulator) است یا خیر.
+- **پارامترها:** ندارد.
+- **مقدار بازگشتی:** `Boolean` (در صورت شبیه‌ساز بودن `true`).
+
+```kotlin
+fun hasDangerousHooks(): Boolean
+```
+وجود هوک‌های خطرناک (مانند Xposed یا Frida) را در پروسه برنامه شناسایی می‌کند.
+- **پارامترها:** ندارد.
+- **مقدار بازگشتی:** `Boolean` (در صورت یافتن هوک‌های مشکوک `true`).
+
+```kotlin
+fun verifyAppSignature(context: Context, expectedSignatureSha256: String): Boolean
+```
+امضای اپلیکیشن را در برابر هش SHA-256 مورد انتظار تأیید می‌کند.
+- **پارامترها:** 
+  - `context`: کانتکست برنامه.
+  - `expectedSignatureSha256`: امضای SHA-256 مورد انتظار.
+- **مقدار بازگشتی:** `Boolean` (در صورت مطابقت `true`).
+
+### `AntiDebugger`
+```kotlin
+object AntiDebugger
+```
+ابزاری برای تشخیص و جلوگیری از تلاش‌های دیباگ (Debugging) روی برنامه.
+
+```kotlin
+fun startMonitoring(scope: CoroutineScope = CoroutineScope(Dispatchers.Default))
+```
+به صورت دوره‌ای بررسی می‌کند که آیا دیباگری به برنامه متصل است یا خیر؛ در صورت اتصال، برنامه را متوقف می‌کند.
+- **پارامترها:** 
+  - `scope`: کوروتین اسکوپ برای اجرای وظیفه مانیتورینگ.
+- **مقدار بازگشتی:** ندارد (`Unit`).
+
+```kotlin
+fun stopMonitoring()
+```
+مانیتورینگ و بررسی دوره‌ای دیباگر را متوقف می‌کند.
+- **پارامترها:** ندارد.
+- **مقدار بازگشتی:** ندارد (`Unit`).
+
+### `BackgroundPrivacyShield`
+```kotlin
+@Composable
+fun BackgroundPrivacyShield()
+```
+هنگامی که برنامه به لیست برنامه‌های اخیر (پس‌زمینه) فرستاده می‌شود، با اعمال فلگ `FLAG_SECURE` محتوای صفحه را محو یا نامرئی می‌کند.
+- **پارامترها:** ندارد.
+- **مقدار بازگشتی:** ندارد (`Unit`).
+
+### `CertificatePinnerHelper`
+```kotlin
+object CertificatePinnerHelper
+```
+شیء کمکی برای تولید تنظیمات Certificate Pinning به منظور جلوگیری از حملات مرد میانی (MITM).
+
+```kotlin
+fun getPinnerConfiguration(domain: String, vararg sha256Pins: String): Map<String, List<String>>
+```
+پیکربندی پین کردن گواهینامه (SSL Pinning) را برای یک دامنه خاص تولید می‌کند.
+- **پارامترها:**
+  - `domain`: نام دامنه (مثل "api.example.com").
+  - `sha256Pins`: پین‌های هش SHA-256.
+- **مقدار بازگشتی:** `Map<String, List<String>>` که شامل دامنه به عنوان کلید و لیستی از پین‌هاست.
+
+### `EasifySecurityUtils`
+```kotlin
+object EasifySecurityUtils
+```
+یک شیء ابزاری شامل بررسی‌های مختلف امنیتی از جمله وضعیت روت بودن دستگاه، فعال بودن VPN و گزینه‌های توسعه‌دهنده.
+
+```kotlin
+fun isRooted(): Boolean
+```
+دستگاه را برای یافتن فایل‌های باینری `su` و نشانه‌های روت (Root) بودن بررسی می‌کند.
+- **پارامترها:** ندارد.
+- **مقدار بازگشتی:** `Boolean` (در صورت روت بودن `true`).
+
+```kotlin
+fun isVpnActive(context: Context): Boolean
+```
+بررسی می‌کند که آیا اتصال VPN در دستگاه فعال است یا خیر.
+- **پارامترها:**
+  - `context`: کانتکست برنامه.
+- **مقدار بازگشتی:** `Boolean` (در صورت فعال بودن VPN `true`).
+
+```kotlin
+fun isDevOptionsEnabled(context: Context): Boolean
+```
+وضعیت روشن بودن گزینه‌های توسعه‌دهنده (Developer Options) در تنظیمات دستگاه را بررسی می‌کند.
+- **پارامترها:**
+  - `context`: کانتکست برنامه.
+- **مقدار بازگشتی:** `Boolean` (در صورت روشن بودن `true`).
+
+### `EncryptionManager`
+```kotlin
+object EncryptionManager
+```
+ابزاری برای انجام رمزنگاری و رمزگشایی داده‌ها با استفاده از Android Keystore (روش AES-GCM).
+
+```kotlin
+fun encrypt(alias: String, text: String): String
+```
+متن را با استفاده از کلید مرتبط با `alias` رمزنگاری می‌کند.
+- **پارامترها:**
+  - `alias`: شناسه کلید در Keystore.
+  - `text`: متن ساده برای رمزنگاری.
+- **مقدار بازگشتی:** `String` (متن رمزنگاری شده Base64 به همراه IV).
+
+```kotlin
+fun decrypt(alias: String, encryptedText: String): String?
+```
+متن رمزنگاری شده را با استفاده از کلید مرتبط با `alias` رمزگشایی می‌کند.
+- **پارامترها:**
+  - `alias`: شناسه کلید در Keystore.
+  - `encryptedText`: رشته رمزنگاری شده Base64.
+- **مقدار بازگشتی:** `String?` (متن اصلی رمزگشایی شده یا در صورت خطا `null`).
+
+### `MalwareDetector`
+```kotlin
+object MalwareDetector
+```
+ابزاری جهت کشف محیط‌های مشکوک نظیر فضاهای مجازی (Virtual Space) یا پکیج‌های مخرب و فریم‌ورک‌های هوک.
+
+```kotlin
+fun hasSuspiciousPackages(context: Context): Boolean
+```
+برنامه‌های نصب‌شده روی دستگاه را جهت یافتن پکیج‌های شناخته‌شده و مشکوک بررسی می‌کند.
+- **پارامترها:**
+  - `context`: کانتکست برنامه.
+- **مقدار بازگشتی:** `Boolean` (در صورت یافتن پکیج مشکوک `true`).
+
+```kotlin
+fun isRunningInVirtualSpace(context: Context): Boolean
+```
+اجرای اپلیکیشن در فضاهای مجازی یا موازی (Parallel Space) را شناسایی می‌کند.
+- **پارامترها:**
+  - `context`: کانتکست برنامه.
+- **مقدار بازگشتی:** `Boolean` (در صورت اجرای اپ در فضای مجازی `true`).
+
+### `ScreenShield`
+```kotlin
+@Composable
+fun ScreenShield()
+```
+با افزودن فلگ `FLAG_SECURE` به پنجره فعال، از گرفتن اسکرین‌شات و ضبط صفحه جلوگیری می‌کند.
+- **پارامترها:** ندارد.
+- **مقدار بازگشتی:** ندارد (`Unit`).
+
+```kotlin
+fun Modifier.screenShield(): Modifier
+```
+مودیفایری (Modifier) که در هر کامپوننتی اعمال شود، مانع از ثبت اسکرین‌شات در تمام پنجره می‌گردد.
+- **پارامترها:** ندارد.
+- **مقدار بازگشتی:** `Modifier`.
+
+### `SecureClipboard`
+```kotlin
+object SecureClipboard
+```
+ابزاری برای مدیریت امن کلیپ‌بورد و به حداقل رساندن خطر نشت اطلاعات حساس از این طریق.
+
+```kotlin
+fun copySensitiveText(
+    context: Context,
+    label: String,
+    text: String,
+    clearAfterMillis: Long = 30000L,
+    scope: CoroutineScope = CoroutineScope(Dispatchers.Main)
+)
+```
+متن حساس را در کلیپ‌بورد سیستم کپی کرده و پس از مدت مشخصی آن را پاک می‌کند.
+- **پارامترها:**
+  - `context`: کانتکست برنامه.
+  - `label`: عنوان و لیبل کلیپ‌بورد.
+  - `text`: متن حساس برای کپی شدن.
+  - `clearAfterMillis`: مدت زمان به میلی‌ثانیه قبل از پاک شدن خودکار (پیش‌فرض 30 ثانیه).
+  - `scope`: کوروتین اسکوپ برای عملیات پاکسازی.
+- **مقدار بازگشتی:** ندارد (`Unit`).
+
+### `SecureStorage`
+```kotlin
+object SecureStorage
+```
+ابزاری برای ذخیره‌سازی امن اطلاعات در سیستم به کمک `EncryptedSharedPreferences`.
+
+```kotlin
+fun getEncryptedPreferences(context: Context, fileName: String = "secure_prefs"): SharedPreferences
+```
+نمونه‌ای از `EncryptedSharedPreferences` را جهت ذخیره و بازیابی داده‌های رمزنگاری شده (AES256) باز می‌گرداند.
+- **پارامترها:**
+  - `context`: کانتکست برنامه.
+  - `fileName`: نام فایل ترجیحات (پیش‌فرض "secure_prefs").
+- **مقدار بازگشتی:** `SharedPreferences`.
+
+### `TapjackingProtector`
+```kotlin
+@Composable
+fun PreventTapjacking(content: @Composable () -> Unit)
+```
+محتوای Compose را در یک FrameLayout با ویژگی `filterTouchesWhenObscured = true` قرار می‌دهد تا از حملات Tapjacking جلوگیری شود.
+- **پارامترها:**
+  - `content`: محتوای کامپوزبلی که باید در برابر Tapjacking محافظت شود.
+- **مقدار بازگشتی:** ندارد (`Unit`).
+

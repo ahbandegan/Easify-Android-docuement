@@ -1,0 +1,170 @@
+---
+title: easify-form
+description: راهنمای استفاده از ماژول easify-form
+---
+
+# easify-form
+
+این ماژول برای ایجاد و مدیریت فرم‌ها در Jetpack Compose طراحی شده است. با استفاده از یک DSL زیبا می‌توانید فیلدها، قوانین اعتبارسنجی (Validation) و وضعیت فرم را به سادگی مدیریت کنید.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-form:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### مدیریت وضعیت فرم (rememberForm)
+می‌توانید تمام فیلدهای فرم و قوانین اعتبارسنجی آن‌ها را در یک جا تعریف کرده و مدیریت کنید.
+
+```kotlin
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import ir.amirhesambandegan.easify_form.rememberForm
+import kotlinx.coroutines.launch
+
+@Composable
+fun FormExample() {
+    val coroutineScope = rememberCoroutineScope()
+    
+    // تعریف وضعیت فرم
+    val formState = rememberForm {
+        field(
+            key = "username",
+            initialValue = ""
+        )
+        field(
+            key = "password",
+            initialValue = ""
+        )
+    }
+
+    val usernameField = formState.getField("username")
+    val passwordField = formState.getField("password")
+
+    Column {
+        OutlinedTextField(
+            value = usernameField?.value ?: "",
+            onValueChange = { usernameField?.value = it },
+            label = { Text("نام کاربری") }
+        )
+        
+        OutlinedTextField(
+            value = passwordField?.value ?: "",
+            onValueChange = { passwordField?.value = it },
+            label = { Text("رمز عبور") }
+        )
+
+        Button(onClick = {
+            coroutineScope.launch {
+                if (formState.validateAll()) {
+                    // فرم معتبر است
+                }
+            }
+        }) {
+            Text("ثبت نام")
+        }
+    }
+}
+```
+
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+```kotlin
+class FormArrayState(private val templateBuilder: FormBuilder.() -> Unit)
+```
+کلاسی برای مدیریت آرایه‌ای از گروه‌های فرم تکرارشونده و پویا (مانند لیست سوابق کاری).
+- **پارامترها:** `templateBuilder` تابع سازنده برای هر آیتم فرم.
+- **توابع و پراپرتی‌های مهم:**
+  - `val items`: لیست قابل مشاهده از آیتم‌های `FormState`.
+  - `fun addItem()`: اضافه کردن یک فرم جدید به انتهای آرایه.
+  - `fun removeItem(index: Int)`: حذف فرم در ایندکس مشخص شده.
+  - `fun validateAll(): Boolean`: اعتبارسنجی تمام فرم‌های داخل آرایه.
+  - `fun toListMap(): List<Map<String, String>>`: تبدیل آرایه به لیستی از مپ‌ها (کلید و مقدار).
+
+```kotlin
+class FormField(
+    val key: String,
+    val initialValue: String = "",
+    val rules: List<ValidationRule> = emptyList(),
+    val asyncValidator: (suspend (String) -> String?)? = null,
+    val inputFilter: ((String) -> String)? = null
+)
+```
+کلاسی برای نمایندگی یک فیلد در فرم، شامل وضعیت و منطق اعتبارسنجی آن.
+- **پارامترها:** `key` شناسه فیلد، `initialValue` مقدار اولیه، `rules` قوانین اعتبارسنجی همگام، `asyncValidator` اعتبارسنجی ناهمگام، `inputFilter` فیلتر ورودی.
+- **پراپرتی‌ها:** `value` (مقدار فعلی)، `error` (خطای اعتبارسنجی)، `isTouched` (وضعیت لمس شدن)، `isDirty` (تغییر یافتن)، `isValidating` (در حال اعتبارسنجی)، `focusRequester` (درخواست‌دهنده فوکوس).
+- **توابع:**
+  - `fun validate(): Boolean`: اعتبارسنجی همگام.
+  - `suspend fun validateAsync(): Boolean`: اعتبارسنجی همگام و ناهمگام.
+
+```kotlin
+class ValidationRule(val errorMessage: String, val check: (String) -> Boolean)
+```
+کلاسی برای تعریف یک قانون اعتبارسنجی.
+- **پارامترها:** `errorMessage` پیام خطا، `check` تابعی برای بررسی صحت مقدار.
+
+```kotlin
+object Validators
+```
+مجموعه‌ای از قوانین اعتبارسنجی از پیش تعریف شده.
+- **توابع:**
+  - `fun required(msg: String = ...): ValidationRule`: فیلد نباید خالی باشد.
+  - `fun email(msg: String = ...): ValidationRule`: فرمت ایمیل معتبر باشد.
+  - `fun minLength(len: Int, msg: String = ...): ValidationRule`: حداقل طول کاراکتر.
+  - `fun phoneIr(msg: String = ...): ValidationRule`: شماره موبایل معتبر ایرانی.
+  - `fun match(otherFieldKey: String, formState: FormState, msg: String = ...): ValidationRule`: تطابق با فیلد دیگر (مثلا تایید رمز عبور).
+  - `fun passwordStrength(msg: String = ...): ValidationRule`: قدرت رمز عبور (حروف بزرگ، کوچک و عدد).
+
+```kotlin
+class FormState(val fields: List<FormField>)
+```
+کلاسی برای مدیریت وضعیت، داده‌ها و اعتبارسنجی مجموعه‌ای از `FormField` ها.
+- **پارامترها:** `fields` لیست فیلدهای فرم.
+- **پراپرتی‌ها:** `isValid` (وضعیت اعتبار کل فرم)، `isDirty` (تغییر یافتن هر یک از فیلدها).
+- **توابع:**
+  - `fun getField(key: String): FormField?`: دریافت یک فیلد بر اساس کلید.
+  - `fun validateAll(): Boolean`: اعتبارسنجی تمام فیلدها و فوکوس روی اولین خطا.
+  - `suspend fun validateAllAsync(): Boolean`: اعتبارسنجی همگام و ناهمگام همه فیلدها.
+  - `fun toMap(): Map<String, String>`: استخراج تمام داده‌های فرم به شکل مپ.
+  - `fun populate(data: Map<String, String>)`: پر کردن فرم با داده‌های یک مپ.
+  - `fun saveDraft(context: Context, formId: String)`: ذخیره پیش‌نویس فرم در SharedPreferences.
+  - `fun restoreDraft(context: Context, formId: String)`: بازیابی پیش‌نویس ذخیره شده.
+
+```kotlin
+object InputFilters
+```
+مجموعه‌ای از فیلترهای ورودی برای اعمال روی فیلدها در هنگام تایپ.
+- **توابع:**
+  - `fun onlyNumbers(): (String) -> String`: فقط اعداد.
+  - `fun onlyEnglishLetters(): (String) -> String`: فقط حروف انگلیسی و فاصله.
+  - `fun onlyPersianLetters(): (String) -> String`: فقط حروف فارسی، فاصله و نیم‌فاصله.
+  - `fun noSpaces(): (String) -> String`: حذف تمام فاصله‌ها.
+
+```kotlin
+class MaskVisualTransformation(private val mask: String, private val maskChar: Char = '#') : VisualTransformation
+```
+تبدیل بصری برای ماسک کردن ورودی بر اساس یک الگو (مانند شماره تماس).
+- **پارامترها:** `mask` الگوی ماسک، `maskChar` کاراکتر جایگزین در الگو.
+
+```kotlin
+class FormBuilder
+```
+کلاس سازنده برای ایجاد `FormState` به صورت اعلانی (Declarative).
+- **توابع:**
+  - `fun field(...)`: ثبت یک فیلد جدید در فرم.
+  - `fun build(): FormState`: ساخت و بازگرداندن `FormState`.
+
+```kotlin
+@Composable
+fun rememberForm(builder: FormBuilder.() -> Unit): FormState
+```
+یک تابع Composable برای ساخت و به خاطر سپردن وضعیت فرم با استفاده از DSL.
+- **پارامترها:** `builder` بدنه سازنده فرم.
+- **خروجی:** یک نمونه `FormState` که در طول recomposition حفظ می‌شود.

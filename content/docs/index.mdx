@@ -1,0 +1,63 @@
+---
+title: راهنمای نصب و شروع
+description: مقدمه‌ای بر EasifyAndroid
+---
+
+# EasifyAndroid
+
+به مستندات **EasifyAndroid** خوش آمدید! 
+
+EasifyAndroid مجموعه‌ای قدرتمند از ابزارها و توابع کمکی (Extensions) برای توسعه‌دهندگان اندروید (با استفاده از زبان کاتلین و Jetpack Compose) است که هدف آن **کاهش کدهای تکراری**، **افزایش سرعت توسعه** و **ساده‌سازی فرآیندهای پیچیده** در اندروید است.
+
+از نسخه `2.0.0` به بعد، EasifyAndroid **صد درصد ماژولار** شده است! این یعنی دیگر نیازی نیست تمام کتابخانه را به پروژه خود اضافه کنید، بلکه فقط ماژول‌هایی که نیاز دارید را نصب می‌کنید.
+
+---
+
+## نصب و راه‌اندازی
+
+این کتابخانه در [JitPack](https://jitpack.io) هاست شده است. برای نصب، ابتدا باید مخزن JitPack را به پروژه اندرویدی خود اضافه کنید.
+
+### ۱. اضافه کردن مخزن JitPack
+در فایل `settings.gradle.kts` (یا `build.gradle` پروژه):
+
+```kotlin
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        maven("https://jitpack.io")
+    }
+}
+```
+
+### ۲. اضافه کردن ماژول‌ها
+حالا کافیست به فایل `build.gradle.kts` (در سطح اپلیکیشن) بروید و ماژول‌های مورد نیازتان را اضافه کنید.
+به عنوان مثال، برای نصب ماژول اصلی (بدون وابستگی‌های اضافی) و ماژول بیومتریک:
+
+```kotlin
+dependencies {
+    implementation("com.github.ahbandegan.Easify-Android:easify-android:2.1.0")
+
+    implementation("com.github.ahbandegan.Easify-Android:easify-biometric:2.1.0")
+    implementation("com.github.ahbandegan.Easify-Android:easify-permission:2.1.0")
+}
+```
+
+---
+
+## لیست ماژول‌های موجود
+
+شما می‌توانید مستندات و راهنمای استفاده‌ی عملی (Usage Guide) هر ماژول را در منوی سمت راست پیدا کنید. 
+
+برخی از مهم‌ترین ماژول‌های این پروژه عبارتند از:
+- **`easify-biometric`**: احراز هویت با اثر انگشت و تشخیص چهره فقط با یک خط کد!
+- **`easify-permission`**: مدیریت فوق‌آسانِ درخواست دسترسی‌ها (Permissions) در کامپوز.
+- **`easify-network`**: بررسی وضعیت اینترنت و اتصال شبکه.
+- **`easify-security`**: رمزنگاری امن داده‌ها با استفاده از Keystore اندروید.
+- **`easify-persian`**: تبدیل تاریخ میلادی به شمسی، تقویم جلالی، و فرمت‌بندی اعداد فارسی.
+- **`easify-fintech`**: ابزارهای پرداخت، فرمت‌بندی کارت بانکی، شبا، و اعتبارسنجی‌های مالی.
+
+---
+
+> 💡 **نکته:** کدهای منبعِ این پروژه به صورت متن‌باز در [گیت‌هاب](https://github.com/ahbandegan/Easify-Android) در دسترس شماست. در صورت تمایل می‌توانید در توسعه‌ی آن مشارکت کنید!

@@ -1,0 +1,204 @@
+---
+title: easify-file
+description: راهنمای استفاده از ماژول easify-file
+---
+
+# easify-file
+
+این ماژول ابزارهایی برای انتخاب و مدیریت فایل‌ها (تصویر، ویدیو و غیره) در Jetpack Compose ارائه می‌دهد و به صورت خودکار با مجوزها (Permissions) سر و کار دارد.
+
+## نصب (Installation)
+
+```kotlin
+implementation("com.github.ahbandegan.Easify-Android:easify-file:2.1.0")
+```
+
+## راهنمای استفاده (Usage Guide)
+
+### انتخاب فایل (FilePicker)
+کامپوزبل `FilePicker` به شما اجازه می‌دهد تا بدون درگیری با پیچیدگی‌های درخواست مجوز، تصویر یا ویدیویی را از گالری انتخاب کنید.
+
+```kotlin
+import android.net.Uri
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import ir.amirhesambandegan.easify_file.FilePicker
+import ir.amirhesambandegan.easify_file.MediaType
+
+@Composable
+fun FilePickerExample() {
+    var selectedUri by remember { mutableStateOf<Uri?>(null) }
+    var showPicker by remember { mutableStateOf(false) }
+
+    Column {
+        Button(onClick = { showPicker = true }) {
+            Text("انتخاب تصویر")
+        }
+        
+        selectedUri?.let { uri ->
+            Text("آدرس فایل انتخاب شده: $uri")
+        }
+
+        if (showPicker) {
+            FilePicker(mediaType = MediaType.ImageOnly) { uri ->
+                selectedUri = uri
+                showPicker = false
+            }
+        }
+    }
+}
+```
+
+
+## لیست کامل توابع و کلاسها (API Reference)
+
+```kotlin
+fun List<File>.compressToZip(zipFile: File): Boolean
+```
+تبدیل و فشرده‌سازی لیستی از فایل‌ها به یک فایل Zip.
+- **پارامترها:** `zipFile` فایل مقصد برای ذخیره Zip.
+- **خروجی:** `Boolean` که نشان‌دهنده موفقیت یا شکست عملیات است.
+
+```kotlin
+fun File.unzipTo(targetFolder: File): Boolean
+```
+استخراج (اکسترکت) کردن محتویات یک فایل Zip در یک پوشه مشخص.
+- **پارامترها:** `targetFolder` پوشه مقصد برای استخراج فایل‌ها.
+- **خروجی:** `Boolean` (موفقیت یا شکست).
+
+```kotlin
+fun Long.toReadableFileSize(): String
+```
+تبدیل اندازه فایل (به بایت) به یک رشته خوانا (مانند MB, KB, GB).
+- **خروجی:** `String` نمایشی از حجم فایل.
+
+```kotlin
+fun File.toBase64String(): String
+```
+خواندن محتویات فایل و تبدیل آن به رشته رمزگذاری شده Base64.
+- **خروجی:** `String` حاوی داده‌های Base64.
+
+```kotlin
+fun String.saveBase64ToFile(destination: File): Boolean
+```
+تبدیل یک رشته Base64 و ذخیره آن به صورت فایل در مسیر مشخص شده.
+- **پارامترها:** `destination` فایل مقصد.
+- **خروجی:** `Boolean` (موفقیت/شکست).
+
+```kotlin
+fun File.calculateMD5(): String
+```
+محاسبه هش MD5 برای یک فایل.
+- **خروجی:** `String` حاوی کد هش.
+
+```kotlin
+fun File.calculateSHA256(): String
+```
+محاسبه هش SHA-256 برای یک فایل.
+- **خروجی:** `String` حاوی کد هش.
+
+```kotlin
+fun Uri.getVideoThumbnail(context: Context): Bitmap?
+```
+استخراج تصویر بندانگشتی (Thumbnail) از یک ویدیوی مشخص شده با Uri.
+- **پارامترها:** `context` کانتکست برنامه.
+- **خروجی:** `Bitmap?` تصویر استخراج شده یا نال در صورت خطا.
+
+```kotlin
+@Composable
+fun FilePicker(mediaType: MediaType, onResult: (Uri?) -> Unit)
+```
+یک کامپوزبل برای باز کردن انتخاب‌گر فایل سیستم جهت انتخاب یک فایل رسانه‌ای.
+- **پارامترها:** `mediaType` نوع رسانه (عکس/ویدیو)، `onResult` تابعی که پس از انتخاب فایل با Uri فراخوانی می‌شود.
+
+```kotlin
+@Composable
+fun DocumentPicker(allowedMimeTypes: Array<String> = arrayOf("*/*"), onResult: (Uri?) -> Unit)
+```
+باز کردن انتخاب‌گر فایل برای انتخاب انواع فایل‌ها و اسناد.
+- **پارامترها:** `allowedMimeTypes` انواع MIME مجاز، `onResult` بازخورد حاوی Uri.
+
+```kotlin
+@Composable
+fun DirectoryPicker(onResult: (Uri?) -> Unit)
+```
+باز کردن انتخاب‌گر پوشه برای انتخاب یک دایرکتوری از سیستم فایل.
+- **پارامترها:** `onResult` بازخورد حاوی Uri دایرکتوری.
+
+```kotlin
+@Composable
+fun SystemCameraCapture(onResult: (Bitmap?) -> Unit)
+```
+باز کردن دوربین سیستم برای ثبت سریع عکس و بازگرداندن آن به صورت Bitmap.
+- **پارامترها:** `onResult` تابعی که تصویر گرفته شده را برمی‌گرداند.
+
+```kotlin
+fun Bitmap.saveToGallery(context: Context, fileName: String, compressFormat: Bitmap.CompressFormat = Bitmap.CompressFormat.JPEG, quality: Int = 100): Boolean
+```
+ذخیره یک تصویر Bitmap به صورت مستقیم در گالری گوشی (پوشه Pictures/Easify).
+- **پارامترها:** `context` کانتکست، `fileName` نام فایل، `compressFormat` فرمت، `quality` کیفیت.
+- **خروجی:** `Boolean` موفقیت ذخیره‌سازی.
+
+```kotlin
+fun File.saveToDownloads(context: Context, fileName: String, mimeType: String = "*/*"): Boolean
+```
+ذخیره یا کپی یک فایل در پوشه دانلودهای عمومی سیستم (Downloads/Easify).
+- **پارامترها:** `context` کانتکست، `fileName` نام فایل، `mimeType` نوع فایل.
+- **خروجی:** `Boolean` موفقیت کپی.
+
+```kotlin
+fun Uri.getFileName(context: Context): String
+```
+دریافت نام فایل از یک Uri.
+- **پارامترها:** `context` کانتکست.
+- **خروجی:** `String` نام فایل.
+
+```kotlin
+fun Uri.getFileSize(context: Context): Long
+```
+دریافت حجم فایل از یک Uri.
+- **پارامترها:** `context` کانتکست.
+- **خروجی:** `Long` سایز به بایت.
+
+```kotlin
+fun Uri.getMimeType(context: Context): String
+```
+دریافت MimeType (نوع فایل) از یک Uri.
+- **پارامترها:** `context` کانتکست.
+- **خروجی:** `String` نمایانگر MimeType.
+
+```kotlin
+fun Uri.toTempFile(context: Context): File?
+```
+کپی کردن داده‌های یک Uri به یک فایل موقت در کش برنامه جهت دسترسی آسان‌تر.
+- **پارامترها:** `context` کانتکست.
+- **خروجی:** `File?` فایل موقت ساخته شده.
+
+```kotlin
+fun Context.clearEasifyCache()
+```
+پاکسازی تمامی فایل‌های موقتی که در کش ساخته شده‌اند.
+
+```kotlin
+enum class MediaType
+```
+کلاس Enum برای تعیین نوع رسانه انتخابی. شامل مقادیر `ImageOnly`، `VideoOnly` و `ImageAndVideo`.
+
+```kotlin
+@Composable
+fun MultipleFilePicker(mediaType: MediaType, maxItem: Int, onResult: (List<Uri>) -> Unit)
+```
+کامپوزبلی برای انتخاب چندین فایل رسانه‌ای به صورت همزمان.
+- **پارامترها:** `mediaType` نوع رسانه، `maxItem` حداکثر تعداد، `onResult` تابع بازگشتی.
+
+```kotlin
+object PermissionUtils
+```
+ابزاری برای مدیریت و بررسی دسترسی‌های لازم برای خواندن رسانه‌ها در اندروید.
+- **توابع مهم:**
+
+```kotlin
+fun getRequiredPermissions(context: Context, mediaType: MediaType): List<String>
+```
