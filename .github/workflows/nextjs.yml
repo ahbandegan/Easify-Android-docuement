@@ -80,10 +80,6 @@ jobs:
           # start the built Next.js server on port 4000 in background for smoke-testing
           nohup ${{ steps.detect-package-manager.outputs.runner }} next start -p 4000 >/tmp/next-start.log 2>&1 &
           sleep 3
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./out
 
   # Deployment job
   deploy:
