@@ -8,7 +8,7 @@ export default function Home() {
   useEffect(() => {
     // If we wanted to detect language, we could do it here
     // For now, redirect to the default language 'fa'
-    router.replace('/fa');
+    router.replace('./fa');
   }, [router]);
   
   return null;
