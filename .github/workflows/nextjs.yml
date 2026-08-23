@@ -75,11 +75,7 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
-      - name: Start Next.js for smoke test
-        run: |
-          # start the built Next.js server on port 4000 in background for smoke-testing
-          nohup ${{ steps.detect-package-manager.outputs.runner }} next start -p 4000 >/tmp/next-start.log 2>&1 &
-          sleep 3
+      # smoke test steps removed: Pages deployment requires static `out/` artifact
 
   # Deployment job
   deploy:
