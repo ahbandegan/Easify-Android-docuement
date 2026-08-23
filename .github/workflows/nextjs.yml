@@ -75,6 +75,20 @@ jobs:
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
       - name: Build with Next.js
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
+      - name: Start Next.js for smoke test
+        run: |
+          # start the built Next.js server on port 4000 in background for smoke-testing
+          nohup ${{ steps.detect-package-manager.outputs.runner }} next start -p 4000 >/tmp/next-start.log 2>&1 &
+          sleep 3
+      - name: Smoke-test homepage styles
+        run: |
+          curl -sSf http://localhost:4000/ -o /tmp/index.html
+          # check for typical stylesheet/link tags or inline style presence
+          if grep -qi "<link[^>]*rel=\"stylesheet\"" /tmp/index.html || grep -qi "href=\"/_next/static/" /tmp/index.html; then
+            echo "Styles appear present on homepage"
+          else
+            echo "WARNING: Stylesheet tags not found on homepage" && exit 1
+          fi
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
