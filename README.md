@@ -2,7 +2,7 @@
 
 This repository contains the official documentation website for the **EasifyAndroid** library.
 
-**🌍 Live Website:** [https://easify-document.netlify.app/](https://easify-document.netlify.app/)
+**🌍 Live Website:** [https://ahbandegan.github.io/Easify-Android-docuement](https://ahbandegan.github.io/Easify-Android-docuement)
 
 ## Supported Languages
 The documentation site is fully localized in:
